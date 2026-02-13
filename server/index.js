@@ -1,17 +1,27 @@
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 import { getAllBugs, getBug, updateBugInNotion, createBugInNotion, getMeta } from './notion.js';
+import { createAuthRouter, requireAuth, isAuthEnabled } from './auth.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
 app.use(cors());
 app.use(express.json());
+app.use(cookieParser());
 
+// Auth routes (unprotected)
+app.use('/auth', createAuthRouter());
+
+// Health check (unprotected)
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', app: 'nobugs', dataSource: 'notion', timestamp: new Date().toISOString() });
+  res.json({ status: 'ok', app: 'nobugs', dataSource: 'notion', authEnabled: isAuthEnabled(), timestamp: new Date().toISOString() });
 });
+
+// Protect all other API routes
+app.use('/api', requireAuth);
 
 app.get('/api/bugs', async (req, res) => {
   try { res.json({ bugs: await getAllBugs() }); }
@@ -41,4 +51,5 @@ app.get('/api/meta', async (req, res) => {
 app.listen(PORT, () => {
   console.log(`🛡️  nobugs API running on http://localhost:${PORT}`);
   console.log(`   Database ID: ${process.env.NOTION_DATABASE_ID?.slice(0, 8)}...`);
+  console.log(`   Auth: ${isAuthEnabled() ? 'enabled (Notion OAuth)' : 'disabled (open access)'}`);
 });

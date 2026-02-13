@@ -1,5 +1,6 @@
-import { Pill } from './ui';
+import { Pill, Avatar } from './ui';
 import { T, PRIORITIES, STATUSES } from '../styles/tokens';
+import { logout } from '../lib/api';
 
 const VIEWS = [
   { id: 'summary', label: '📊 Summary' },
@@ -21,7 +22,25 @@ function Select({ value, onChange, options, placeholder }) {
   );
 }
 
-export default function Header({ view, onViewChange, filters, meta, onNewBug }) {
+function UserMenu({ user }) {
+  const displayName = user.name || user.email;
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+      {user.avatar
+        ? <img src={user.avatar} alt={displayName} style={{ width: 24, height: 24, borderRadius: '50%' }} />
+        : <Avatar name={displayName} size={24} />
+      }
+      <span style={{ fontSize: '12px', color: T.textDim, fontFamily: T.fontSans }}>{displayName}</span>
+      <button onClick={logout} style={{
+        padding: '4px 10px', borderRadius: '4px', border: `1px solid ${T.border}`,
+        background: 'transparent', color: T.textDim, fontSize: '11px',
+        cursor: 'pointer', fontFamily: T.fontSans,
+      }}>Logout</button>
+    </div>
+  );
+}
+
+export default function Header({ view, onViewChange, filters, meta, onNewBug, user }) {
   return (
     <div style={{
       padding: '16px 32px', borderBottom: `1px solid ${T.border}`,
@@ -58,6 +77,10 @@ export default function Header({ view, onViewChange, filters, meta, onNewBug }) 
           background: T.accent, color: '#fff', fontSize: '13px', fontWeight: 600,
           cursor: 'pointer', fontFamily: T.fontSans, whiteSpace: 'nowrap',
         }}>+ New Bug</button>
+        {user && <>
+          <div style={{ height: 20, width: 1, background: T.border }} />
+          <UserMenu user={user} />
+        </>}
       </div>
     </div>
   );

@@ -10,16 +10,35 @@ function getMockBugs() {
   return mockBugs;
 }
 
+async function authFetch(url, options) {
+  const res = await fetch(url, options);
+  if (res.status === 401) {
+    window.location.href = '/auth/login';
+    throw new Error('Not authenticated');
+  }
+  return res;
+}
+
+export async function fetchAuthStatus() {
+  const res = await fetch('/auth/me');
+  return res.json();
+}
+
+export async function logout() {
+  await fetch('/auth/logout', { method: 'POST' });
+  window.location.href = '/';
+}
+
 export async function fetchBugs() {
   if (USE_MOCK) return { bugs: getMockBugs() };
-  const res = await fetch(`${API_BASE}/bugs`);
+  const res = await authFetch(`${API_BASE}/bugs`);
   if (!res.ok) throw new Error(`Failed to fetch bugs: ${res.statusText}`);
   return res.json();
 }
 
 export async function fetchBug(id) {
   if (USE_MOCK) return getMockBugs().find((b) => b.id === id) || null;
-  const res = await fetch(`${API_BASE}/bugs/${id}`);
+  const res = await authFetch(`${API_BASE}/bugs/${id}`);
   if (!res.ok) throw new Error(`Failed to fetch bug: ${res.statusText}`);
   return res.json();
 }
@@ -32,7 +51,7 @@ export async function updateBug(id, updates) {
     bugs[idx] = { ...bugs[idx], ...updates };
     return bugs[idx];
   }
-  const res = await fetch(`${API_BASE}/bugs/${id}`, {
+  const res = await authFetch(`${API_BASE}/bugs/${id}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(updates),
@@ -52,7 +71,7 @@ export async function createBug(bug) {
     bugs.unshift(newBug);
     return newBug;
   }
-  const res = await fetch(`${API_BASE}/bugs`, {
+  const res = await authFetch(`${API_BASE}/bugs`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(bug),
@@ -72,7 +91,7 @@ export async function fetchMeta() {
       tags: MOCK_TAGS,
     };
   }
-  const res = await fetch(`${API_BASE}/meta`);
+  const res = await authFetch(`${API_BASE}/meta`);
   if (!res.ok) throw new Error(`Failed to fetch meta: ${res.statusText}`);
   return res.json();
 }

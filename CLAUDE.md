@@ -91,3 +91,12 @@ npm run build        # Production build to /dist
 - Notion property mapping is configured via `PROP_MAP` in `server/notion.js`
 - Bug IDs follow the format `NB-XXX`
 - Imports from `src/views/` use `../styles/tokens` and `../components/ui` (one level up)
+
+## Workspace
+
+- Notion workspace: **BigWeiWei's Notion** (`2ff47fc8-597b-47e0-95ac-eb7b69a96fdc`)
+- OAuth integration client ID: `306d872b-594c-8096-85b2-0037dd7f1840`
+
+## Workflow
+
+- **Do not commit or push** after making changes — the user will test FE+BE manually first, and handle commit/push themselves after verifying
