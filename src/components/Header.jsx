@@ -21,7 +21,7 @@ function Select({ value, onChange, options, placeholder }) {
   );
 }
 
-export default function Header({ view, onViewChange, filters, meta }) {
+export default function Header({ view, onViewChange, filters, meta, onNewBug }) {
   return (
     <div style={{
       padding: '16px 32px', borderBottom: `1px solid ${T.border}`,
@@ -50,9 +50,14 @@ export default function Header({ view, onViewChange, filters, meta }) {
             background: T.bg, border: `1px solid ${T.border}`, borderRadius: T.radius,
             padding: '6px 12px', color: T.text, fontSize: '13px', fontFamily: T.fontSans, width: 180, outline: 'none',
           }} />
-        <Select value={filters.project} onChange={filters.setProject} options={meta.projects} placeholder="All Projects" />
-        <Select value={filters.priority} onChange={filters.setPriority} options={PRIORITIES} placeholder="All Priorities" />
-        <Select value={filters.status} onChange={filters.setStatus} options={STATUSES} placeholder="All Statuses" />
+        {meta.projects?.length > 0 && <Select value={filters.project} onChange={filters.setProject} options={meta.projects} placeholder="All Projects" />}
+        <Select value={filters.priority} onChange={filters.setPriority} options={meta.priorities?.length > 0 ? meta.priorities : PRIORITIES} placeholder="All Priorities" />
+        <Select value={filters.status} onChange={filters.setStatus} options={meta.statuses?.length > 0 ? meta.statuses : STATUSES} placeholder="All Statuses" />
+        <button onClick={onNewBug} style={{
+          padding: '6px 14px', borderRadius: '6px', border: 'none',
+          background: T.accent, color: '#fff', fontSize: '13px', fontWeight: 600,
+          cursor: 'pointer', fontFamily: T.fontSans, whiteSpace: 'nowrap',
+        }}>+ New Bug</button>
       </div>
     </div>
   );

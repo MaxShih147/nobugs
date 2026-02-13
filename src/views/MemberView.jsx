@@ -5,11 +5,14 @@ import { Badge, Avatar, BugRow, TableHeader, Card } from '../components/ui';
 export default function MemberView({ bugs, meta, onSelect }) {
   const [selected, setSelected] = useState(null);
 
-  const members = meta.members.map((m) => ({
+  const memberNames = meta.members?.length > 0
+    ? meta.members
+    : [...new Set(bugs.map((b) => b.assignee).filter((a) => a && a !== 'Unassigned'))];
+  const members = memberNames.map((m) => ({
     name: m,
     bugs: bugs.filter((b) => b.assignee === m),
     active: bugs.filter((b) => b.assignee === m && b.status !== 'Done').length,
-    critical: bugs.filter((b) => b.assignee === m && b.priority === 'Critical' && b.status !== 'Done').length,
+    critical: bugs.filter((b) => b.assignee === m && (b.priority === 'Critical' || b.priority.startsWith('P1')) && b.status !== 'Done').length,
   }));
 
   const displayBugs = bugs

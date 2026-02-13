@@ -3,7 +3,7 @@ import { fetchBugs, fetchMeta, updateBug, createBug } from '../lib/api';
 
 export function useBugs() {
   const [bugs, setBugs] = useState([]);
-  const [meta, setMeta] = useState({ members: [], projects: [], sprints: [] });
+  const [meta, setMeta] = useState({ members: [], projects: [], sprints: [], statuses: [], priorities: [], tags: [], types: [], scopes: [], sizes: [] });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -37,7 +37,7 @@ export function useBugs() {
       if (filterStatus !== 'All' && b.status !== filterStatus) return false;
       if (searchQuery) {
         const q = searchQuery.toLowerCase();
-        if (!b.title.toLowerCase().includes(q) && !b.id.toLowerCase().includes(q) && !b.tags.some((t) => t.toLowerCase().includes(q)))
+        if (!b.title.toLowerCase().includes(q) && !b.id.toLowerCase().includes(q) && !(b.tags || []).some((t) => t.toLowerCase().includes(q)))
           return false;
       }
       return true;

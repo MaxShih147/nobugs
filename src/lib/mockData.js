@@ -15,7 +15,7 @@ export const MOCK_SPRINTS = [
   'Sprint 26 (Mar 3–Mar 16)',
 ];
 
-const TAGS = ['UI', 'Backend', 'API', 'Performance', 'Security', 'Database', 'Auth', 'UX', 'Infra', 'Mobile'];
+export const MOCK_TAGS = ['UI', 'Backend', 'API', 'Performance', 'Security', 'Database', 'Auth', 'UX', 'Infra', 'Mobile'];
 const STATUSES = ['Open', 'In Progress', 'In Review', 'Done'];
 const PRIORITIES = ['Critical', 'High', 'Medium', 'Low'];
 
@@ -88,8 +88,8 @@ export function generateMockBugs() {
       assignee: MOCK_MEMBERS[Math.floor(rand() * MOCK_MEMBERS.length)],
       project: MOCK_PROJECTS[Math.floor(rand() * MOCK_PROJECTS.length)],
       tags: [
-        TAGS[Math.floor(rand() * TAGS.length)],
-        TAGS[Math.floor(rand() * TAGS.length)],
+        MOCK_TAGS[Math.floor(rand() * MOCK_TAGS.length)],
+        MOCK_TAGS[Math.floor(rand() * MOCK_TAGS.length)],
       ].filter((v, j, a) => a.indexOf(v) === j),
       sprint: MOCK_SPRINTS[Math.floor(rand() * MOCK_SPRINTS.length)],
       created: createdBase.toISOString().slice(0, 10),

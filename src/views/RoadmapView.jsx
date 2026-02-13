@@ -50,7 +50,7 @@ export default function RoadmapView({ bugs, meta, onSelect }) {
                     </div>
                     <div style={{ fontSize: '12px', fontWeight: 500, lineHeight: 1.3, marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{bug.title}</div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: '10px', color: projectColor(bug.project) }}>{bug.project}</span>
+                      <span style={{ fontSize: '10px', color: projectColor(bug.project || bug.type || '') }}>{bug.project || bug.type || ''}</span>
                       <span style={{ fontSize: '10px', color: T.textDim }}>{bug.assignee.split(' ')[0]}</span>
                     </div>
                   </div>

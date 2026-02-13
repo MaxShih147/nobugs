@@ -4,17 +4,18 @@ const notion = new Client({ auth: process.env.NOTION_API_KEY });
 const databaseId = process.env.NOTION_DATABASE_ID;
 
 // ─── Property name mapping ──────────────────────────────────────────────────
-// Customize these to match YOUR Notion database property names.
+// Customized to match the "Product Backlog - Test for NoBugs" database.
 const PROP_MAP = {
-  title: 'Title',
-  status: 'Status',
-  priority: 'Priority',
-  assignee: 'Assignee',
-  project: 'Project',
-  tags: 'Tags',
-  sprint: 'Sprint',
-  due: 'Due Date',
-  description: 'Description',
+  title: 'Item',
+  status: 'Status',       // multi_select
+  priority: 'Priority',   // select
+  assignee: 'Engineers',   // people
+  sprint: 'Sprint',       // multi_select
+  due: 'Due',             // date
+  type: 'Type',           // select: Bug, Improve, Feature
+  scope: 'Scope',         // select: Epic, Story, Task
+  size: 'Size',           // select: XL, L, M, S
+  points: 'Points',       // number
 };
 
 // ─── Property extractors ────────────────────────────────────────────────────
@@ -22,11 +23,6 @@ const PROP_MAP = {
 function extractTitle(prop) {
   if (!prop || prop.type !== 'title') return '';
   return prop.title.map((t) => t.plain_text).join('');
-}
-
-function extractRichText(prop) {
-  if (!prop || prop.type !== 'rich_text') return '';
-  return prop.rich_text.map((t) => t.plain_text).join('');
 }
 
 function extractSelect(prop) {
@@ -41,6 +37,11 @@ function extractMultiSelect(prop) {
   return prop.multi_select.map((s) => s.name);
 }
 
+function extractFirstMultiSelect(prop) {
+  const arr = extractMultiSelect(prop);
+  return arr.length > 0 ? arr[0] : '';
+}
+
 function extractDate(prop) {
   if (!prop || prop.type !== 'date' || !prop.date) return null;
   return prop.date.start || null;
@@ -49,8 +50,12 @@ function extractDate(prop) {
 function extractPerson(prop) {
   if (!prop) return '';
   if (prop.type === 'people' && prop.people.length > 0) return prop.people[0].name || prop.people[0].id;
-  if (prop.type === 'select') return prop.select?.name || '';
   return '';
+}
+
+function extractNumber(prop) {
+  if (!prop || prop.type !== 'number') return null;
+  return prop.number;
 }
 
 // ─── Notion page → nobugs bug object ───────────────────────────────────────
@@ -58,17 +63,18 @@ function extractPerson(prop) {
 function mapPageToBug(page) {
   const p = page.properties;
   return {
-    id: `NB-${page.id.slice(0, 6).toUpperCase()}`,
+    id: `NB-${page.id.replace(/-/g, '').slice(-6).toUpperCase()}`,
     notionId: page.id,
     title: extractTitle(p[PROP_MAP.title]),
-    status: extractSelect(p[PROP_MAP.status]) || 'Open',
-    priority: extractSelect(p[PROP_MAP.priority]) || 'Medium',
+    status: extractFirstMultiSelect(p[PROP_MAP.status]) || 'To do',
+    priority: extractSelect(p[PROP_MAP.priority]) || 'P4',
     assignee: extractPerson(p[PROP_MAP.assignee]) || 'Unassigned',
-    project: extractSelect(p[PROP_MAP.project]) || 'Uncategorized',
-    tags: extractMultiSelect(p[PROP_MAP.tags]),
-    sprint: extractSelect(p[PROP_MAP.sprint]) || '',
+    type: extractSelect(p[PROP_MAP.type]) || '',
+    scope: extractSelect(p[PROP_MAP.scope]) || '',
+    size: extractSelect(p[PROP_MAP.size]) || '',
+    points: extractNumber(p[PROP_MAP.points]),
+    sprint: extractFirstMultiSelect(p[PROP_MAP.sprint]) || '',
     due: extractDate(p[PROP_MAP.due]),
-    description: extractRichText(p[PROP_MAP.description]),
     created: page.created_time.slice(0, 10),
   };
 }
@@ -97,11 +103,13 @@ export async function getBug(pageId) {
 
 export async function updateBugInNotion(pageId, updates) {
   const properties = {};
-  if (updates.status) properties[PROP_MAP.status] = { select: { name: updates.status } };
+  if (updates.status) properties[PROP_MAP.status] = { multi_select: [{ name: updates.status }] };
   if (updates.priority) properties[PROP_MAP.priority] = { select: { name: updates.priority } };
-  if (updates.assignee) properties[PROP_MAP.assignee] = { select: { name: updates.assignee } };
-  if (updates.project) properties[PROP_MAP.project] = { select: { name: updates.project } };
-  if (updates.sprint) properties[PROP_MAP.sprint] = { select: { name: updates.sprint } };
+  if (updates.type) properties[PROP_MAP.type] = { select: { name: updates.type } };
+  if (updates.scope) properties[PROP_MAP.scope] = { select: { name: updates.scope } };
+  if (updates.size) properties[PROP_MAP.size] = { select: { name: updates.size } };
+  if (updates.sprint) properties[PROP_MAP.sprint] = { multi_select: [{ name: updates.sprint }] };
+  if (updates.points !== undefined) properties[PROP_MAP.points] = { number: updates.points };
   if (updates.due !== undefined) {
     properties[PROP_MAP.due] = updates.due ? { date: { start: updates.due } } : { date: null };
   }
@@ -113,14 +121,14 @@ export async function createBugInNotion(bugData) {
   const properties = {
     [PROP_MAP.title]: { title: [{ text: { content: bugData.title } }] },
   };
-  if (bugData.status) properties[PROP_MAP.status] = { select: { name: bugData.status } };
+  if (bugData.status) properties[PROP_MAP.status] = { multi_select: [{ name: bugData.status }] };
   if (bugData.priority) properties[PROP_MAP.priority] = { select: { name: bugData.priority } };
-  if (bugData.assignee) properties[PROP_MAP.assignee] = { select: { name: bugData.assignee } };
-  if (bugData.project) properties[PROP_MAP.project] = { select: { name: bugData.project } };
-  if (bugData.tags?.length) properties[PROP_MAP.tags] = { multi_select: bugData.tags.map((t) => ({ name: t })) };
-  if (bugData.sprint) properties[PROP_MAP.sprint] = { select: { name: bugData.sprint } };
+  if (bugData.type) properties[PROP_MAP.type] = { select: { name: bugData.type } };
+  if (bugData.scope) properties[PROP_MAP.scope] = { select: { name: bugData.scope } };
+  if (bugData.size) properties[PROP_MAP.size] = { select: { name: bugData.size } };
+  if (bugData.sprint) properties[PROP_MAP.sprint] = { multi_select: [{ name: bugData.sprint }] };
+  if (bugData.points !== undefined && bugData.points !== null) properties[PROP_MAP.points] = { number: bugData.points };
   if (bugData.due) properties[PROP_MAP.due] = { date: { start: bugData.due } };
-  if (bugData.description) properties[PROP_MAP.description] = { rich_text: [{ text: { content: bugData.description } }] };
 
   const page = await notion.pages.create({ parent: { database_id: databaseId }, properties });
   return mapPageToBug(page);
@@ -138,11 +146,11 @@ export async function getMeta() {
     return [];
   };
   return {
-    members: getOpts(PROP_MAP.assignee),
-    projects: getOpts(PROP_MAP.project),
-    sprints: getOpts(PROP_MAP.sprint),
     statuses: getOpts(PROP_MAP.status),
     priorities: getOpts(PROP_MAP.priority),
-    tags: getOpts(PROP_MAP.tags),
+    types: getOpts(PROP_MAP.type),
+    scopes: getOpts(PROP_MAP.scope),
+    sizes: getOpts(PROP_MAP.size),
+    sprints: getOpts(PROP_MAP.sprint),
   };
 }

@@ -2,14 +2,16 @@ import { T, STATUSES, PRIORITIES, statusColor, priorityColor } from '../styles/t
 import { StatCard, BugRow, Card, SectionLabel, Avatar, ProgressBar } from '../components/ui';
 
 export default function SummaryView({ bugs, meta, onSelect }) {
-  const open = bugs.filter((b) => b.status === 'Open').length;
-  const inProg = bugs.filter((b) => b.status === 'In Progress').length;
-  const inRev = bugs.filter((b) => b.status === 'In Review').length;
   const done = bugs.filter((b) => b.status === 'Done').length;
-  const critical = bugs.filter((b) => b.priority === 'Critical' && b.status !== 'Done').length;
+  const active = bugs.length - done;
+  const inRev = bugs.filter((b) => b.status === 'In Review' || b.status === 'Reviewing').length;
+  const critical = bugs.filter((b) => (b.priority === 'Critical' || b.priority.startsWith('P1')) && b.status !== 'Done').length;
   const overdue = bugs.filter((b) => b.due && new Date(b.due) < new Date() && b.status !== 'Done').length;
 
-  const memberLoad = meta.members.map((m) => ({
+  const members = meta.members?.length > 0
+    ? meta.members
+    : [...new Set(bugs.map((b) => b.assignee).filter((a) => a && a !== 'Unassigned'))];
+  const memberLoad = members.map((m) => ({
     name: m, count: bugs.filter((b) => b.assignee === m && b.status !== 'Done').length,
   }));
   const maxLoad = Math.max(...memberLoad.map((m) => m.count), 1);
@@ -17,7 +19,7 @@ export default function SummaryView({ bugs, meta, onSelect }) {
   return (
     <div className="fade-in" style={{ padding: 32 }}>
       <div style={{ display: 'flex', gap: 16, marginBottom: 28, flexWrap: 'wrap' }}>
-        <StatCard label="Total Open" value={open + inProg + inRev} sub={`${done} resolved`} />
+        <StatCard label="Active" value={active} sub={`${done} resolved`} />
         <StatCard label="Critical" value={critical} color={T.critical} sub="needs attention" />
         <StatCard label="Overdue" value={overdue} color={T.high} sub="past due date" />
         <StatCard label="In Review" value={inRev} color={T.inReview} sub="awaiting merge" />
@@ -26,7 +28,7 @@ export default function SummaryView({ bugs, meta, onSelect }) {
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 28 }}>
         <Card style={{ padding: '20px 24px' }}>
           <SectionLabel>Status Breakdown</SectionLabel>
-          {STATUSES.map((s) => {
+          {(meta.statuses?.length > 0 ? meta.statuses : STATUSES).map((s) => {
             const count = bugs.filter((b) => b.status === s).length;
             const pct = bugs.length > 0 ? ((count / bugs.length) * 100).toFixed(0) : 0;
             return (
@@ -42,7 +44,7 @@ export default function SummaryView({ bugs, meta, onSelect }) {
         </Card>
         <Card style={{ padding: '20px 24px' }}>
           <SectionLabel>Priority Breakdown</SectionLabel>
-          {PRIORITIES.map((p) => {
+          {(meta.priorities?.length > 0 ? meta.priorities : PRIORITIES).map((p) => {
             const count = bugs.filter((b) => b.priority === p).length;
             const pct = bugs.length > 0 ? ((count / bugs.length) * 100).toFixed(0) : 0;
             return (
@@ -78,7 +80,7 @@ export default function SummaryView({ bugs, meta, onSelect }) {
         <div style={{ padding: '16px 24px', borderBottom: `1px solid ${T.border}` }}>
           <SectionLabel>Critical & High Priority (Active)</SectionLabel>
         </div>
-        {bugs.filter((b) => (b.priority === 'Critical' || b.priority === 'High') && b.status !== 'Done').slice(0, 10)
+        {bugs.filter((b) => (b.priority === 'Critical' || b.priority === 'High' || b.priority.startsWith('P1') || b.priority.startsWith('P2')) && b.status !== 'Done').slice(0, 10)
           .map((bug) => <BugRow key={bug.id} bug={bug} onClick={onSelect} />)}
       </Card>
     </div>

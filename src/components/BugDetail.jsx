@@ -6,11 +6,11 @@ export default function BugDetail({ bug, onBack }) {
 
   const fields = [
     ['Assignee', bug.assignee, null],
-    ['Project', bug.project, projectColor(bug.project)],
-    ['Sprint', bug.sprint, null],
+    bug.project ? ['Project', bug.project, projectColor(bug.project)] : ['Type', bug.type || '—', null],
+    ['Sprint', bug.sprint || '—', null],
     ['Due Date', bug.due || 'No due date', null],
     ['Created', bug.created, null],
-    ['Tags', bug.tags.join(', '), null],
+    bug.tags ? ['Tags', bug.tags.join(', ') || '—', null] : ['Scope', bug.scope || '—', null],
   ];
 
   return (

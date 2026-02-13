@@ -68,7 +68,7 @@ export function BugRow({ bug, onClick }) {
       <PriorityBadge priority={bug.priority} />
       <StatusBadge status={bug.status} />
       <span style={{ fontSize: '12px', color: T.textDim }}>{bug.assignee.split(' ')[0]}</span>
-      <span style={{ fontSize: '12px', color: projectColor(bug.project) }}>{bug.project}</span>
+      <span style={{ fontSize: '12px', color: projectColor(bug.project || bug.type || '') }}>{bug.project || bug.type || ''}</span>
       <span style={{ fontSize: '11px', color: T.textDim, fontFamily: T.font }}>{bug.due || '—'}</span>
     </div>
   );
@@ -81,7 +81,7 @@ export function TableHeader() {
       padding: '10px 16px', gap: 8, borderBottom: `1px solid ${T.border}`,
       fontSize: '11px', fontFamily: T.font, color: T.textDim, textTransform: 'uppercase', letterSpacing: '0.5px',
     }}>
-      <span>ID</span><span>Title</span><span>Priority</span><span>Status</span><span>Assignee</span><span>Project</span><span>Due</span>
+      <span>ID</span><span>Title</span><span>Priority</span><span>Status</span><span>Assignee</span><span>Type</span><span>Due</span>
     </div>
   );
 }

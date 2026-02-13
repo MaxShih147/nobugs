@@ -5,8 +5,11 @@ import { Badge, BugRow, TableHeader, Card, ProgressBar } from '../components/ui'
 export default function ProjectView({ bugs, meta, onSelect }) {
   const [selected, setSelected] = useState(null);
 
-  const projects = meta.projects.map((p) => {
-    const pBugs = bugs.filter((b) => b.project === p);
+  const projectNames = meta.projects?.length > 0
+    ? meta.projects
+    : [...new Set(bugs.map((b) => b.project || b.type || '').filter(Boolean))];
+  const projects = projectNames.map((p) => {
+    const pBugs = bugs.filter((b) => (b.project || b.type || '') === p);
     return {
       name: p, total: pBugs.length,
       open: pBugs.filter((b) => b.status !== 'Done').length,
@@ -17,7 +20,7 @@ export default function ProjectView({ bugs, meta, onSelect }) {
   }).filter((p) => p.total > 0);
 
   const displayBugs = bugs
-    .filter((b) => !selected || b.project === selected)
+    .filter((b) => !selected || (b.project || b.type || '') === selected)
     .sort((a, b) => PRIORITIES.indexOf(a.priority) - PRIORITIES.indexOf(b.priority));
 
   return (

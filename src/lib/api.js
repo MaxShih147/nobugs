@@ -1,4 +1,4 @@
-import { generateMockBugs, MOCK_MEMBERS, MOCK_PROJECTS, MOCK_SPRINTS } from './mockData';
+import { generateMockBugs, MOCK_MEMBERS, MOCK_PROJECTS, MOCK_SPRINTS, MOCK_TAGS } from './mockData';
 
 const USE_MOCK = import.meta.env.VITE_DATA_SOURCE !== 'notion';
 const API_BASE = '/api';
@@ -63,7 +63,14 @@ export async function createBug(bug) {
 
 export async function fetchMeta() {
   if (USE_MOCK) {
-    return { members: MOCK_MEMBERS, projects: MOCK_PROJECTS, sprints: MOCK_SPRINTS };
+    return {
+      members: MOCK_MEMBERS,
+      projects: MOCK_PROJECTS,
+      sprints: MOCK_SPRINTS,
+      statuses: ['Open', 'In Progress', 'In Review', 'Done'],
+      priorities: ['Critical', 'High', 'Medium', 'Low'],
+      tags: MOCK_TAGS,
+    };
   }
   const res = await fetch(`${API_BASE}/meta`);
   if (!res.ok) throw new Error(`Failed to fetch meta: ${res.statusText}`);

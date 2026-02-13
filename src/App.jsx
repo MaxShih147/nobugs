@@ -8,11 +8,12 @@ import KanbanView from './views/KanbanView';
 import MemberView from './views/MemberView';
 import ProjectView from './views/ProjectView';
 import RoadmapView from './views/RoadmapView';
+import CreateView from './views/CreateView';
 
 export default function App() {
   const [view, setView] = useState('summary');
   const [detailBug, setDetailBug] = useState(null);
-  const { bugs, meta, loading, error, filters } = useBugs();
+  const { bugs, meta, loading, error, filters, createBug } = useBugs();
 
   if (loading) {
     return (
@@ -46,9 +47,10 @@ export default function App() {
 
   return (
     <div style={{ minHeight: '100vh', background: T.bg }}>
-      <Header view={view} onViewChange={setView} filters={filters} meta={meta} />
+      <Header view={view} onViewChange={setView} filters={filters} meta={meta} onNewBug={() => setView('create')} />
+      {view === 'create' && <CreateView meta={meta} onCreate={createBug} onCancel={() => setView('summary')} />}
       {view === 'summary' && <SummaryView bugs={bugs} meta={meta} onSelect={setDetailBug} />}
-      {view === 'kanban' && <KanbanView bugs={bugs} onSelect={setDetailBug} />}
+      {view === 'kanban' && <KanbanView bugs={bugs} meta={meta} onSelect={setDetailBug} />}
       {view === 'member' && <MemberView bugs={bugs} meta={meta} onSelect={setDetailBug} />}
       {view === 'project' && <ProjectView bugs={bugs} meta={meta} onSelect={setDetailBug} />}
       {view === 'roadmap' && <RoadmapView bugs={bugs} meta={meta} onSelect={setDetailBug} />}
