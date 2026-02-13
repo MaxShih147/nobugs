@@ -1,36 +1,74 @@
-# 🐛 nobugs
+# nobugs
 
-A flexible bug tracker dashboard that uses **Notion as its database**. Your team keeps working in Notion — you get a powerful, multi-view dashboard.
+A flexible bug tracker dashboard that uses **Notion as its database**. Your team keeps working in Notion — you get a powerful, multi-view dashboard with authentication.
+
+![Summary dashboard](docs/images/summary-dashboard.png)
+
+![Roadmap sprint view](docs/images/roadmap-sprint-view.png)
 
 ## Views
 
 | View | Description |
 |------|-------------|
-| 📊 Summary | Stats, breakdowns by status/priority, workload per member, critical bugs |
-| ⬜ Kanban | Drag-style columns: Open → In Progress → In Review → Done |
-| 👤 Members | Click a member to filter their bugs, see who's overloaded |
-| 📁 Projects | Per-project cards with resolution %, filter by project |
-| 🗓️ Roadmap | Sprint timeline with progress bars and bug cards |
+| Summary | Stats, breakdowns by status/priority, workload per member, critical bugs |
+| Kanban | Drag-style columns: Open → In Progress → In Review → Done |
+| Members | Click a member to filter their bugs, see who's overloaded |
+| Projects | Per-project cards with resolution %, filter by project |
+| Roadmap | Sprint timeline with progress bars and bug cards |
 
 All views support global filters (project, priority, status, search).
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Frontend | React 18, Vite 6, inline styles |
+| Backend | Express 4, Notion SDK |
+| Auth | Invite code + email, JWT (httpOnly cookie) |
+| Runtime | Node.js 20 |
+| Deployment | Docker / Docker Compose |
 
 ## Architecture
 
 ```
-┌─────────────────────┐
-│  React Frontend     │  ← Vite dev server (port 3000)
-│  (Views + Filters)  │
-└────────┬────────────┘
-         │ /api/*
-┌────────▼────────────┐
-│  Express API Server  │  ← port 3001
-│  (server/index.js)   │
-└────────┬────────────┘
-         │ Notion SDK
-┌────────▼────────────┐
-│  Notion Database     │  ← Your existing bug database
-└─────────────────────┘
+┌─────────────────────────────────────────────────┐
+│                  Browser                         │
+│  ┌─────────────┐  ┌──────────┐  ┌────────────┐ │
+│  │ Login Page   │  │ Header   │  │ Views      │ │
+│  │ (email+code) │  │ (user,   │  │ (Summary,  │ │
+│  │              │  │  logout) │  │  Kanban,   │ │
+│  │              │  │          │  │  Members,  │ │
+│  │              │  │          │  │  Projects, │ │
+│  │              │  │          │  │  Roadmap)  │ │
+│  └──────┬───────┘  └────┬─────┘  └─────┬──────┘ │
+│         │               │              │         │
+│         └───────┬───────┴──────────────┘         │
+│                 │ fetch /api/* & /auth/*          │
+└─────────────────┼────────────────────────────────┘
+                  │
+    ┌─────────────▼──────────────┐
+    │     Express API Server      │  port 3001
+    │  ┌──────────┐ ┌──────────┐ │
+    │  │ auth.js   │ │ notion.js│ │
+    │  │ (JWT,     │ │ (CRUD,   │ │
+    │  │  invite   │ │  prop    │ │
+    │  │  code)    │ │  mapper) │ │
+    │  └──────────┘ └────┬─────┘ │
+    └─────────────────────┼──────┘
+                          │ Notion SDK
+    ┌─────────────────────▼──────┐
+    │     Notion Database         │
+    │  (bugs, members, sprints)   │
+    └────────────────────────────┘
 ```
+
+**Data flow:**
+```
+App.jsx → useBugs() hook → api.js → mock data (default)
+                                   → /api/* → Express → Notion (production)
+```
+
+Mock mode (`VITE_DATA_SOURCE` unset) uses seeded fake data — no server needed.
 
 ## Quick Start (Mock Data)
 
@@ -55,7 +93,7 @@ Open http://localhost:3000
 ### 2. Share Your Database
 
 1. Open your bug tracking database in Notion
-2. Click **⋯** → **Connections** → **Connect to** → select "nobugs"
+2. Click **...** → **Connections** → **Connect to** → select "nobugs"
 3. Copy the **database ID** from the URL:
    ```
    https://www.notion.so/{workspace}/{database_id}?v=...
@@ -103,6 +141,30 @@ npm run server
 VITE_DATA_SOURCE=notion npm run dev
 ```
 
+## Authentication
+
+Auth is **optional**. If `INVITE_CODE` and `JWT_SECRET` are set in `.env`, the app requires login. Otherwise it runs with open access.
+
+### Setup
+
+Add to `.env`:
+```
+INVITE_CODE=your_shared_code
+JWT_SECRET=<run: openssl rand -hex 32>
+ALLOWED_EMAILS=alice@example.com,bob@example.com
+```
+
+- **INVITE_CODE** — shared passphrase, give it to your team
+- **JWT_SECRET** — signs session cookies (8h expiry)
+- **ALLOWED_EMAILS** — comma-separated allowlist; leave empty to allow anyone with the code
+
+### How it works
+
+1. User opens the app → sees login form
+2. Enters email + invite code → server validates → JWT cookie set
+3. All `/api/*` routes are protected by `requireAuth` middleware
+4. On 401, the frontend redirects back to the login page
+
 ## Deploy with Docker
 
 ```bash
@@ -137,7 +199,7 @@ nobugs/
 ├── src/
 │   ├── components/      # Shared UI components
 │   │   ├── ui.jsx       # Badge, Pill, StatCard, BugRow, etc.
-│   │   ├── Header.jsx   # Top nav + filters
+│   │   ├── Header.jsx   # Top nav + filters + user menu
 │   │   └── BugDetail.jsx
 │   ├── views/           # Dashboard views
 │   │   ├── SummaryView.jsx
@@ -148,15 +210,16 @@ nobugs/
 │   ├── hooks/
 │   │   └── useBugs.js   # Data fetching + filter state
 │   ├── lib/
-│   │   ├── api.js       # Frontend API client (mock/notion)
+│   │   ├── api.js       # Frontend API client (mock/notion) + auth helpers
 │   │   └── mockData.js  # Mock data generator
 │   ├── styles/
 │   │   ├── global.css
 │   │   └── tokens.js    # Design tokens
-│   ├── App.jsx
+│   ├── App.jsx          # Root component, auth gate, view routing
 │   └── main.jsx
 ├── server/
 │   ├── index.js         # Express API server
+│   ├── auth.js          # Invite code auth, JWT, requireAuth middleware
 │   └── notion.js        # Notion SDK client + data mapper
 ├── docker/
 │   └── serve-static.js  # Production combined server
@@ -167,6 +230,15 @@ nobugs/
 ├── vite.config.js
 └── README.md
 ```
+
+## TODO
+
+- [ ] Map logged-in email to Notion member for personalized views (e.g. "My Bugs")
+- [ ] Add drag-and-drop to Kanban board
+- [ ] Bug comments / activity log
+- [ ] Email notifications for assigned bugs
+- [ ] Production deployment guide (AWS / Railway / Fly.io)
+- [ ] Dark/light theme toggle
 
 ## License
 

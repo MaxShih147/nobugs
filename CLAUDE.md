@@ -100,3 +100,10 @@ npm run build        # Production build to /dist
 ## Workflow
 
 - **Do not commit or push** after making changes — the user will test FE+BE manually first, and handle commit/push themselves after verifying
+- **For FE+BE testing** — start both servers (`npm run server` + `npm run dev`), then open the browser with `open http://localhost:3000` so the user can test immediately
+
+## TODO
+
+- [ ] Remove OAuth integration from Notion (no longer used)
+- [ ] Set up production deployment
+- [ ] Add member email-to-name mapping for better display in Header
