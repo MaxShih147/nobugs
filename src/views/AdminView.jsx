@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { T } from '../styles/tokens';
 import { Card } from '../components/ui';
 import { fetchMembers, saveMembers } from '../lib/api';
@@ -15,52 +15,99 @@ const labelStyle = {
   fontFamily: T.font, textTransform: 'uppercase', letterSpacing: '0.5px',
 };
 
+function MemberRow({ name, initialEmail, idx, total, onEmailChange }) {
+  const [email, setEmail] = useState(initialEmail);
+  const [focused, setFocused] = useState(false);
+
+  const handleChange = (e) => {
+    const val = e.target.value;
+    setEmail(val);
+    onEmailChange(name, val);
+  };
+
+  return (
+    <div style={{
+      display: 'grid', gridTemplateColumns: '1fr 1fr 80px', alignItems: 'center',
+      padding: '10px 20px',
+      borderBottom: idx < total - 1 ? `1px solid ${T.border}` : 'none',
+    }}>
+      <span style={{ fontSize: '14px', color: T.text, fontFamily: T.fontSans }}>{name}</span>
+      <input
+        type="text"
+        autoComplete="one-time-code"
+        readOnly={!focused}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
+        value={email}
+        onChange={handleChange}
+        placeholder="email@example.com"
+        style={{ ...fieldStyle, padding: '8px 10px', cursor: focused ? 'text' : 'pointer' }}
+      />
+      <div style={{ textAlign: 'center' }}>
+        {email.trim() ? (
+          <span style={{
+            display: 'inline-block', padding: '2px 8px', borderRadius: '10px',
+            fontSize: '11px', fontFamily: T.fontSans, fontWeight: 600,
+            background: 'rgba(34,197,94,0.15)', color: '#22c55e',
+          }}>Mapped</span>
+        ) : (
+          <span style={{
+            display: 'inline-block', padding: '2px 8px', borderRadius: '10px',
+            fontSize: '11px', fontFamily: T.fontSans,
+            background: 'rgba(255,255,255,0.05)', color: T.textDim,
+          }}>--</span>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function AdminView({ user }) {
-  const [rows, setRows] = useState([]);
+  const [names, setNames] = useState([]);
+  const emailsRef = useRef({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
   const [lastSaved, setLastSaved] = useState(null);
+  const [mappedCount, setMappedCount] = useState(0);
 
   useEffect(() => {
     fetchMembers()
       .then((data) => {
         const saved = data.mappings || [];
         const discovered = data.discoveredNames || [];
-        // Merge: start with discovered names, fill in saved emails
-        const merged = discovered.map((name) => {
-          const existing = saved.find(
-            (m) => m.notionName.toLowerCase() === name.toLowerCase()
-          );
-          return { notionName: name, email: existing?.email || '' };
-        });
-        // Add any saved mappings for names not in discovered (edge case)
+        const allNames = [...discovered];
+        const emailMap = {};
         saved.forEach((m) => {
-          if (!merged.some((r) => r.notionName.toLowerCase() === m.notionName.toLowerCase())) {
-            merged.push({ notionName: m.notionName, email: m.email || '' });
+          emailMap[m.notionName] = m.email || '';
+          if (!allNames.some((n) => n.toLowerCase() === m.notionName.toLowerCase())) {
+            allNames.push(m.notionName);
           }
         });
-        setRows(merged);
+        emailsRef.current = emailMap;
+        setNames(allNames);
+        setMappedCount(Object.values(emailMap).filter((e) => e.trim()).length);
         if (data.updatedAt) setLastSaved({ at: data.updatedAt, by: data.updatedBy });
       })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   }, []);
 
-  const updateEmail = (idx, email) => {
-    setRows((prev) => prev.map((r, i) => i === idx ? { ...r, email } : r));
+  const handleEmailChange = useCallback((name, email) => {
+    emailsRef.current[name] = email;
+    setMappedCount(Object.values(emailsRef.current).filter((e) => e.trim()).length);
     setSuccess(null);
-  };
+  }, []);
 
   const handleSave = async () => {
     setSaving(true);
     setError(null);
     setSuccess(null);
     try {
-      const mappings = rows
-        .filter((r) => r.email.trim())
-        .map((r) => ({ notionName: r.notionName, email: r.email.trim() }));
+      const mappings = Object.entries(emailsRef.current)
+        .filter(([, email]) => email.trim())
+        .map(([notionName, email]) => ({ notionName, email: email.trim() }));
       const result = await saveMembers(mappings);
       setSuccess('Mappings saved successfully');
       setLastSaved({ at: result.updatedAt, by: result.updatedBy });
@@ -70,8 +117,6 @@ export default function AdminView({ user }) {
       setSaving(false);
     }
   };
-
-  const mappedCount = rows.filter((r) => r.email.trim()).length;
 
   if (loading) {
     return (
@@ -126,42 +171,21 @@ export default function AdminView({ user }) {
           <span style={{ ...labelStyle, textAlign: 'center' }}>Status</span>
         </div>
 
-        {rows.length === 0 && (
+        {names.length === 0 && (
           <div style={{ padding: '32px 20px', textAlign: 'center', color: T.textDim, fontSize: '13px', fontFamily: T.fontSans }}>
             No member names discovered yet. Bug data will populate this list.
           </div>
         )}
 
-        {rows.map((row, idx) => (
-          <div key={row.notionName} style={{
-            display: 'grid', gridTemplateColumns: '1fr 1fr 80px', alignItems: 'center',
-            padding: '10px 20px',
-            borderBottom: idx < rows.length - 1 ? `1px solid ${T.border}` : 'none',
-          }}>
-            <span style={{ fontSize: '14px', color: T.text, fontFamily: T.fontSans }}>{row.notionName}</span>
-            <input
-              type="email"
-              value={row.email}
-              onChange={(e) => updateEmail(idx, e.target.value)}
-              placeholder="email@example.com"
-              style={{ ...fieldStyle, padding: '8px 10px' }}
-            />
-            <div style={{ textAlign: 'center' }}>
-              {row.email.trim() ? (
-                <span style={{
-                  display: 'inline-block', padding: '2px 8px', borderRadius: '10px',
-                  fontSize: '11px', fontFamily: T.fontSans, fontWeight: 600,
-                  background: 'rgba(34,197,94,0.15)', color: '#22c55e',
-                }}>Mapped</span>
-              ) : (
-                <span style={{
-                  display: 'inline-block', padding: '2px 8px', borderRadius: '10px',
-                  fontSize: '11px', fontFamily: T.fontSans,
-                  background: 'rgba(255,255,255,0.05)', color: T.textDim,
-                }}>--</span>
-              )}
-            </div>
-          </div>
+        {names.map((name, idx) => (
+          <MemberRow
+            key={name}
+            name={name}
+            initialEmail={emailsRef.current[name] || ''}
+            idx={idx}
+            total={names.length}
+            onEmailChange={handleEmailChange}
+          />
         ))}
       </Card>
 
@@ -169,7 +193,7 @@ export default function AdminView({ user }) {
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
         marginTop: 16, fontSize: '12px', color: T.textDim, fontFamily: T.fontSans,
       }}>
-        <span>{mappedCount} of {rows.length} members mapped</span>
+        <span>{mappedCount} of {names.length} members mapped</span>
         {lastSaved && (
           <span>Last saved: {new Date(lastSaved.at).toLocaleString()} by {lastSaved.by}</span>
         )}
