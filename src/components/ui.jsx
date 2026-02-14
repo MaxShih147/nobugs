@@ -11,7 +11,12 @@ export function Badge({ children, color, bg, style = {} }) {
 }
 
 export function PriorityBadge({ priority }) {
-  return <Badge color={priorityColor(priority)} bg={prioritySoft(priority)}>{stripEmoji(priority)}</Badge>;
+  return (
+    <span style={{
+      fontSize: '11px', fontWeight: 600, fontFamily: T.font,
+      color: priorityColor(priority), letterSpacing: '0.3px',
+    }}>{stripEmoji(priority)}</span>
+  );
 }
 
 export function StatusBadge({ status }) {
