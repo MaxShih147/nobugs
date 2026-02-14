@@ -52,13 +52,11 @@ function LoginPage({ onLogin }) {
         padding: '52px 44px', maxWidth: 400, width: '100%',
         boxShadow: `${T.accentGlow}, ${T.shadowLg}`,
       }}>
-        <div style={{
+        <img src="/nobugs-icon.png" alt="nobugs" style={{
           width: 52, height: 52, borderRadius: T.radiusLg,
-          background: `linear-gradient(135deg, ${T.accent}, #6366f1)`,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: '26px', margin: '0 auto 24px',
+          margin: '0 auto 24px', display: 'block',
           boxShadow: T.accentGlow,
-        }}>🛡️</div>
+        }} />
         <h1 style={{
           fontSize: '24px', fontWeight: 700, color: T.text,
           margin: '0 0 8px', fontFamily: T.fontSans, textAlign: 'center',

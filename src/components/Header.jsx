@@ -56,20 +56,12 @@ export default function Header({ view, onViewChange, filters, meta, onNewBug, us
       position: 'sticky', top: 0, zIndex: 10, flexWrap: 'wrap', gap: 12,
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{
-            width: 30, height: 30, borderRadius: T.radiusSm,
-            background: `linear-gradient(135deg, ${T.accent}, #6366f1)`,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: '14px', boxShadow: T.accentGlow,
-          }}>🛡️</div>
-          <span style={{
-            fontSize: '17px', fontWeight: 700, fontFamily: T.fontSans,
-            letterSpacing: '-0.5px',
-            background: `linear-gradient(135deg, ${T.text}, ${T.textDim})`,
-            WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-          }}>nobugs</span>
-        </div>
+        <span style={{
+          fontSize: '18px', fontWeight: 700, fontFamily: T.fontSans,
+          letterSpacing: '-0.5px',
+          background: `linear-gradient(135deg, #c4b5fd, ${T.accent})`,
+          WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+        }}>nobugs</span>
         <div style={{ height: 20, width: 1, background: T.border }} />
         <div style={{ display: 'flex', gap: 4 }}>
           {views.map((v) => (
