@@ -46,11 +46,11 @@ export default function RoadmapView({ bugs, meta, onSelect }) {
                     opacity: bug.status === 'Done' ? 0.5 : 1,
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = 'rgba(139, 124, 246, 0.15)';
+                    e.currentTarget.style.background = T.surfaceHover;
                     e.currentTarget.style.transform = 'translateY(-1px)';
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.06)';
+                    e.currentTarget.style.background = T.surface;
                     e.currentTarget.style.transform = 'none';
                   }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
