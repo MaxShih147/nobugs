@@ -23,9 +23,9 @@ export function StatusBadge({ status }) {
   const color = statusColor(status);
   return (
     <span style={{
-      display: 'inline-flex', alignItems: 'center', gap: 6, padding: '3px 10px',
-      borderRadius: T.radiusSm, fontSize: '11px', fontWeight: 600,
-      fontFamily: T.font, color, background: statusSoft(status), letterSpacing: '0.3px',
+      display: 'inline-flex', alignItems: 'center', gap: 6,
+      fontSize: '11px', fontWeight: 600, fontFamily: T.font,
+      color, letterSpacing: '0.3px',
     }}>
       <span style={{
         width: 6, height: 6, borderRadius: '50%', background: color,

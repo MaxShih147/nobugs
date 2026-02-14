@@ -93,11 +93,20 @@ export const prioritySoft = (p) =>
 export const priorityDots = (p) =>
   ({ critical: 5, high: 4, medium: 3, low: 2 }[matchPriority(p)] || 1);
 
+function matchStatus(s) {
+  const c = s.toLowerCase().trim();
+  if (c === 'done' || c === 'complete' || c === 'completed' || c === 'closed' || c === 'resolved') return 'done';
+  if (c.includes('progress') || c === 'doing' || c === 'active' || c === 'started') return 'inProgress';
+  if (c.includes('review') || c === 'qa' || c === 'testing') return 'inReview';
+  if (c === 'open' || c === 'to do' || c === 'todo' || c === 'not started' || c === 'backlog' || c === 'new' || c === 'pending') return 'open';
+  return null;
+}
+
 export const statusColor = (s) =>
-  ({ Open: T.open, 'In Progress': T.inProgress, 'In Review': T.inReview, Done: T.done }[s] || T.textDim);
+  ({ done: T.done, inProgress: T.inProgress, inReview: T.inReview, open: T.open }[matchStatus(s)] || T.textDim);
 
 export const statusSoft = (s) =>
-  ({ Open: T.openSoft, 'In Progress': T.inProgressSoft, 'In Review': T.inReviewSoft, Done: T.doneSoft }[s] || 'transparent');
+  ({ done: T.doneSoft, inProgress: T.inProgressSoft, inReview: T.inReviewSoft, open: T.openSoft }[matchStatus(s)] || 'transparent');
 
 const PROJECT_PALETTE = ['#8b7cf6', '#5ec4ab', '#e09b6e', '#6aabde', '#dcc96e', '#c97ba5', '#5ec4bc', '#8894a0'];
 const projectColorCache = {};
