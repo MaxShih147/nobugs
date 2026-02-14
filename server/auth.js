@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import jwt from 'jsonwebtoken';
-import { findMemberByEmail } from './members.js';
+import { findMemberByEmail, getMemberMappings } from './members.js';
 
 const JWT_EXPIRY = '8h';
 const COOKIE_NAME = 'nobugs_token';
@@ -16,8 +16,15 @@ function getAllowedEmails() {
 
 function isEmailAllowed(email) {
   const allowed = getAllowedEmails();
-  if (allowed.length === 0) return true;
-  return allowed.includes(email?.toLowerCase());
+  if (allowed.length > 0) return allowed.includes(email?.toLowerCase());
+
+  // No ALLOWED_EMAILS set — use admin email + member mappings as allowlist
+  const adminEmail = getAdminEmail();
+  if (adminEmail && email?.toLowerCase() === adminEmail) return true;
+
+  const { mappings } = getMemberMappings();
+  if (mappings.length === 0) return true; // no restrictions yet
+  return mappings.some((m) => m.email && m.email.toLowerCase() === email?.toLowerCase());
 }
 
 function getAdminEmail() {

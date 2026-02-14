@@ -77,7 +77,15 @@ function LoginPage({ onLogin }) {
 }
 
 export default function App() {
-  const [view, setView] = useState('summary');
+  const [view, setViewState] = useState(() => {
+    const hash = window.location.hash.slice(1);
+    const valid = ['summary', 'kanban', 'member', 'project', 'roadmap', 'create', 'admin'];
+    return valid.includes(hash) ? hash : 'summary';
+  });
+  const setView = (v) => {
+    setViewState(v);
+    window.location.hash = v;
+  };
   const [detailBug, setDetailBug] = useState(null);
   const [authState, setAuthState] = useState({ loading: true, authEnabled: false, authenticated: false, user: null });
   const { bugs, meta, loading, error, filters, createBug, reload } = useBugs();
