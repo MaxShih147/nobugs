@@ -109,26 +109,28 @@ export default function App() {
     return <LoginPage onLogin={(user) => { setAuthState({ loading: false, authEnabled: true, authenticated: true, user }); reload(); }} />;
   }
 
-  if (loading) {
-    return (
-      <div style={{
-        minHeight: '100vh', background: T.bg, display: 'flex',
-        alignItems: 'center', justifyContent: 'center', color: T.textDim, fontFamily: T.font,
-      }}>Loading bugs...</div>
-    );
-  }
+  if (view !== 'admin') {
+    if (loading) {
+      return (
+        <div style={{
+          minHeight: '100vh', background: T.bg, display: 'flex',
+          alignItems: 'center', justifyContent: 'center', color: T.textDim, fontFamily: T.font,
+        }}>Loading bugs...</div>
+      );
+    }
 
-  if (error && !(authState.authEnabled && error === 'Not authenticated')) {
-    return (
-      <div style={{
-        minHeight: '100vh', background: T.bg, display: 'flex',
-        alignItems: 'center', justifyContent: 'center', color: T.critical,
-        fontFamily: T.font, flexDirection: 'column', gap: 12,
-      }}>
-        <div>Error: {error}</div>
-        <div style={{ fontSize: '13px', color: T.textDim }}>Check your .env configuration and server connection.</div>
-      </div>
-    );
+    if (error && !(authState.authEnabled && error === 'Not authenticated')) {
+      return (
+        <div style={{
+          minHeight: '100vh', background: T.bg, display: 'flex',
+          alignItems: 'center', justifyContent: 'center', color: T.critical,
+          fontFamily: T.font, flexDirection: 'column', gap: 12,
+        }}>
+          <div>Error: {error}</div>
+          <div style={{ fontSize: '13px', color: T.textDim }}>Check your .env configuration and server connection.</div>
+        </div>
+      );
+    }
   }
 
   if (detailBug) {

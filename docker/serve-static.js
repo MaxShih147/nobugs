@@ -6,7 +6,7 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { getAllBugs, getBug, updateBugInNotion, createBugInNotion, getMeta } from './server/notion.js';
 import { createAuthRouter, requireAuth, requireAdmin, isAuthEnabled } from './server/auth.js';
-import { getMemberMappings, saveMemberMappings } from './server/members.js';
+import { getMemberMappings, saveMemberMappings, cacheDiscoveredNames, getDiscoveredNames } from './server/members.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -26,7 +26,11 @@ app.get('/api/health', (req, res) => res.json({ status: 'ok', app: 'nobugs', aut
 app.use('/api', requireAuth);
 
 app.get('/api/bugs', async (req, res) => {
-  try { res.json({ bugs: await getAllBugs() }); } catch (err) { res.status(500).json({ error: err.message }); }
+  try {
+    const bugs = await getAllBugs();
+    cacheDiscoveredNames(bugs);
+    res.json({ bugs });
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 app.get('/api/bugs/:id', async (req, res) => {
   try { res.json(await getBug(req.params.id)); } catch (err) { res.status(500).json({ error: err.message }); }
@@ -41,21 +45,18 @@ app.get('/api/meta', async (req, res) => {
   try { res.json(await getMeta()); } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-app.get('/api/members', async (req, res) => {
+app.get('/api/members', (req, res) => {
   try {
     const saved = getMemberMappings();
-    const bugs = await getAllBugs().catch(() => []);
-    const nameSet = new Set();
-    (bugs || []).forEach((b) => { if (b.assignee) nameSet.add(b.assignee); });
-    res.json({ ...saved, discoveredNames: [...nameSet].sort() });
+    res.json({ ...saved, discoveredNames: getDiscoveredNames() });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 app.put('/api/members', requireAdmin, (req, res) => {
   try {
-    const { mappings } = req.body;
+    const { mappings, discoveredNames } = req.body;
     if (!Array.isArray(mappings)) return res.status(400).json({ error: 'mappings must be an array' });
-    const result = saveMemberMappings(mappings, req.user?.email || 'unknown');
+    const result = saveMemberMappings(mappings, req.user?.email || 'unknown', discoveredNames);
     res.json(result);
   } catch (err) { res.status(500).json({ error: err.message }); }
 });

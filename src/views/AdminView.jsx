@@ -63,8 +63,8 @@ function MemberRow({ name, initialEmail, idx, total, onEmailChange }) {
 }
 
 export default function AdminView({ user }) {
-  const [names, setNames] = useState([]);
   const emailsRef = useRef({});
+  const [names, setNames] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
@@ -77,16 +77,14 @@ export default function AdminView({ user }) {
       .then((data) => {
         const saved = data.mappings || [];
         const discovered = data.discoveredNames || [];
-        const allNames = [...discovered];
+        const nameSet = new Set(discovered);
         const emailMap = {};
         saved.forEach((m) => {
           emailMap[m.notionName] = m.email || '';
-          if (!allNames.some((n) => n.toLowerCase() === m.notionName.toLowerCase())) {
-            allNames.push(m.notionName);
-          }
+          nameSet.add(m.notionName);
         });
         emailsRef.current = emailMap;
-        setNames(allNames);
+        setNames([...nameSet].sort());
         setMappedCount(Object.values(emailMap).filter((e) => e.trim()).length);
         if (data.updatedAt) setLastSaved({ at: data.updatedAt, by: data.updatedBy });
       })
@@ -108,7 +106,7 @@ export default function AdminView({ user }) {
       const mappings = Object.entries(emailsRef.current)
         .filter(([, email]) => email.trim())
         .map(([notionName, email]) => ({ notionName, email: email.trim() }));
-      const result = await saveMembers(mappings);
+      const result = await saveMembers(mappings, names);
       setSuccess('Mappings saved successfully');
       setLastSaved({ at: result.updatedAt, by: result.updatedBy });
     } catch (err) {
