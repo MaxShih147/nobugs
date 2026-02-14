@@ -101,6 +101,8 @@ npm run build        # Production build to /dist
 
 - **Do not commit or push** after making changes — the user will test FE+BE manually first, and handle commit/push themselves after verifying
 - **For FE+BE testing** — start both servers (`npm run server` + `npm run dev`), then open the browser with `open http://localhost:3000` so the user can test immediately
+- **When the user says something correlating to "pass"** (e.g. "pass", "looks good", "it works", "approved"), ask them if they want to commit and push
+- **When the user says "add a rule"**, add the rule to this CLAUDE.md file
 
 ## TODO
 
