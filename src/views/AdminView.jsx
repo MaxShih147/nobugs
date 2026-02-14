@@ -1,18 +1,19 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { T } from '../styles/tokens';
+import { T, glass } from '../styles/tokens';
 import { Card } from '../components/ui';
 import { fetchMembers, saveMembers } from '../lib/api';
 
 const fieldStyle = {
-  width: '100%', padding: '10px 12px', background: T.bg,
+  width: '100%', padding: '10px 14px',
+  background: 'rgba(255, 255, 255, 0.03)',
   border: `1px solid ${T.border}`, borderRadius: T.radius,
   color: T.text, fontSize: '13px', fontFamily: T.fontSans, outline: 'none',
-  boxSizing: 'border-box',
+  boxSizing: 'border-box', transition: `all 0.25s ${T.ease}`,
 };
 
 const labelStyle = {
-  fontSize: '12px', fontWeight: 600, color: T.textDim,
-  fontFamily: T.font, textTransform: 'uppercase', letterSpacing: '0.5px',
+  fontSize: '11px', fontWeight: 500, color: T.textDim,
+  fontFamily: T.fontSans, textTransform: 'uppercase', letterSpacing: '1px',
 };
 
 function MemberRow({ name, initialEmail, idx, total, onEmailChange }) {
@@ -28,10 +29,11 @@ function MemberRow({ name, initialEmail, idx, total, onEmailChange }) {
   return (
     <div style={{
       display: 'grid', gridTemplateColumns: '1fr 1fr 80px', alignItems: 'center',
-      padding: '10px 20px',
+      padding: '12px 22px',
       borderBottom: idx < total - 1 ? `1px solid ${T.border}` : 'none',
+      transition: `background 0.25s ${T.ease}`,
     }}>
-      <span style={{ fontSize: '14px', color: T.text, fontFamily: T.fontSans }}>{name}</span>
+      <span style={{ fontSize: '14px', color: T.text, fontFamily: T.fontSans, fontWeight: 500 }}>{name}</span>
       <input
         type="text"
         autoComplete="one-time-code"
@@ -41,20 +43,20 @@ function MemberRow({ name, initialEmail, idx, total, onEmailChange }) {
         value={email}
         onChange={handleChange}
         placeholder="email@example.com"
-        style={{ ...fieldStyle, padding: '8px 10px', cursor: focused ? 'text' : 'pointer' }}
+        style={{ ...fieldStyle, padding: '8px 12px', cursor: focused ? 'text' : 'pointer' }}
       />
       <div style={{ textAlign: 'center' }}>
         {email.trim() ? (
           <span style={{
-            display: 'inline-block', padding: '2px 8px', borderRadius: '10px',
+            display: 'inline-block', padding: '3px 10px', borderRadius: T.radiusSm,
             fontSize: '11px', fontFamily: T.fontSans, fontWeight: 600,
-            background: 'rgba(34,197,94,0.15)', color: '#22c55e',
+            background: T.doneSoft, color: T.done,
           }}>Mapped</span>
         ) : (
           <span style={{
-            display: 'inline-block', padding: '2px 8px', borderRadius: '10px',
+            display: 'inline-block', padding: '3px 10px', borderRadius: T.radiusSm,
             fontSize: '11px', fontFamily: T.fontSans,
-            background: 'rgba(255,255,255,0.05)', color: T.textDim,
+            background: 'rgba(255, 255, 255, 0.03)', color: T.textDim,
           }}>--</span>
         )}
       </div>
@@ -118,17 +120,17 @@ export default function AdminView({ user }) {
 
   if (loading) {
     return (
-      <div style={{ padding: 32, textAlign: 'center', color: T.textDim, fontFamily: T.font }}>
+      <div style={{ padding: 32, textAlign: 'center', color: T.textDim, fontFamily: T.fontSans }}>
         Loading members...
       </div>
     );
   }
 
   return (
-    <div style={{ padding: '32px', maxWidth: 720, margin: '0 auto' }}>
+    <div className="fade-in" style={{ padding: '32px', maxWidth: 720, margin: '0 auto' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
         <div>
-          <h2 style={{ fontSize: '20px', fontWeight: 700, fontFamily: T.font, color: T.text, margin: '0 0 4px' }}>
+          <h2 style={{ fontSize: '22px', fontWeight: 700, fontFamily: T.fontSans, color: T.text, margin: '0 0 4px', letterSpacing: '-0.5px' }}>
             Admin Panel
           </h2>
           <p style={{ fontSize: '13px', color: T.textDim, fontFamily: T.fontSans, margin: 0 }}>
@@ -136,33 +138,35 @@ export default function AdminView({ user }) {
           </p>
         </div>
         <button onClick={handleSave} disabled={saving} style={{
-          padding: '8px 20px', borderRadius: '6px', border: 'none',
-          background: saving ? T.border : T.accent, color: '#fff',
-          fontSize: '13px', fontWeight: 600, cursor: saving ? 'default' : 'pointer',
-          fontFamily: T.fontSans,
+          padding: '9px 22px', borderRadius: T.radiusSm, border: 'none',
+          background: saving ? T.border : `linear-gradient(135deg, ${T.accent}, #6366f1)`,
+          color: '#fff', fontSize: '13px', fontWeight: 600,
+          cursor: saving ? 'default' : 'pointer', fontFamily: T.fontSans,
+          boxShadow: saving ? 'none' : T.accentGlow,
+          transition: `all 0.25s ${T.ease}`,
         }}>{saving ? 'Saving...' : 'Save Mappings'}</button>
       </div>
 
       {error && (
         <div style={{
-          padding: '10px 14px', borderRadius: T.radius, marginBottom: 16,
-          background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)',
+          padding: '12px 16px', borderRadius: T.radius, marginBottom: 16,
+          background: T.criticalSoft, border: '1px solid rgba(244, 113, 113, 0.2)',
           color: T.critical, fontSize: '13px', fontFamily: T.fontSans,
         }}>{error}</div>
       )}
       {success && (
         <div style={{
-          padding: '10px 14px', borderRadius: T.radius, marginBottom: 16,
-          background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.3)',
-          color: '#22c55e', fontSize: '13px', fontFamily: T.fontSans,
+          padding: '12px 16px', borderRadius: T.radius, marginBottom: 16,
+          background: T.doneSoft, border: '1px solid rgba(125, 216, 149, 0.2)',
+          color: T.done, fontSize: '13px', fontFamily: T.fontSans,
         }}>{success}</div>
       )}
 
       <Card style={{ padding: 0, overflow: 'hidden' }}>
         <div style={{
           display: 'grid', gridTemplateColumns: '1fr 1fr 80px',
-          padding: '12px 20px', borderBottom: `1px solid ${T.border}`,
-          background: T.bg,
+          padding: '14px 22px', borderBottom: `1px solid ${T.border}`,
+          background: 'rgba(255, 255, 255, 0.02)',
         }}>
           <span style={labelStyle}>Notion Name</span>
           <span style={labelStyle}>Email</span>
@@ -170,7 +174,7 @@ export default function AdminView({ user }) {
         </div>
 
         {names.length === 0 && (
-          <div style={{ padding: '32px 20px', textAlign: 'center', color: T.textDim, fontSize: '13px', fontFamily: T.fontSans }}>
+          <div style={{ padding: '40px 22px', textAlign: 'center', color: T.textDim, fontSize: '13px', fontFamily: T.fontSans }}>
             No member names discovered yet. Bug data will populate this list.
           </div>
         )}

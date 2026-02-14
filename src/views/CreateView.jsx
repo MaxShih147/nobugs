@@ -1,18 +1,19 @@
 import { useState } from 'react';
-import { T } from '../styles/tokens';
+import { T, glass } from '../styles/tokens';
 import { Card } from '../components/ui';
 
 const fieldStyle = {
-  width: '100%', padding: '10px 12px', background: T.bg,
+  width: '100%', padding: '12px 16px',
+  background: 'rgba(255, 255, 255, 0.03)',
   border: `1px solid ${T.border}`, borderRadius: T.radius,
   color: T.text, fontSize: '13px', fontFamily: T.fontSans, outline: 'none',
-  boxSizing: 'border-box',
+  boxSizing: 'border-box', transition: `all 0.25s ${T.ease}`,
 };
 
 const labelStyle = {
-  fontSize: '12px', fontWeight: 600, color: T.textDim,
-  fontFamily: T.font, textTransform: 'uppercase', letterSpacing: '0.5px',
-  marginBottom: 6, display: 'block',
+  fontSize: '11px', fontWeight: 500, color: T.textDim,
+  fontFamily: T.fontSans, textTransform: 'uppercase', letterSpacing: '1px',
+  marginBottom: 8, display: 'block',
 };
 
 function Field({ label, children }) {
@@ -36,18 +37,9 @@ function SelectField({ label, value, onChange, options, placeholder }) {
 }
 
 const INITIAL = {
-  title: '',
-  status: '',
-  priority: '',
-  type: '',
-  scope: '',
-  size: '',
-  sprint: '',
-  points: '',
-  due: '',
-  assignee: '',
-  project: '',
-  tags: [],
+  title: '', status: '', priority: '', type: '', scope: '',
+  size: '', sprint: '', points: '', due: '', assignee: '',
+  project: '', tags: [],
 };
 
 export default function CreateView({ meta, onCreate, onCancel }) {
@@ -86,19 +78,20 @@ export default function CreateView({ meta, onCreate, onCancel }) {
   const hasProjects = meta.projects?.length > 0;
 
   return (
-    <div style={{ padding: '32px', maxWidth: 640, margin: '0 auto' }}>
+    <div className="fade-in" style={{ padding: '32px', maxWidth: 640, margin: '0 auto' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
-        <h2 style={{ fontSize: '20px', fontWeight: 700, fontFamily: T.font, color: T.text, margin: 0 }}>
+        <h2 style={{ fontSize: '22px', fontWeight: 700, fontFamily: T.fontSans, color: T.text, margin: 0, letterSpacing: '-0.5px' }}>
           New Bug
         </h2>
         <button onClick={onCancel} style={{
-          padding: '6px 14px', borderRadius: '6px', border: `1px solid ${T.border}`,
+          padding: '7px 16px', borderRadius: T.radiusSm, border: `1px solid ${T.border}`,
           background: 'transparent', color: T.textDim, fontSize: '13px',
-          cursor: 'pointer', fontFamily: T.fontSans,
+          cursor: 'pointer', fontFamily: T.fontSans, fontWeight: 500,
+          transition: `all 0.25s ${T.ease}`,
         }}>Cancel</button>
       </div>
 
-      <Card style={{ padding: 24 }}>
+      <Card style={{ padding: 28 }}>
         <form onSubmit={handleSubmit}>
           <Field label="Title">
             <input value={form.title} onChange={(e) => set('title')(e.target.value)}
@@ -131,10 +124,12 @@ export default function CreateView({ meta, onCreate, onCancel }) {
           )}
 
           <button type="submit" disabled={submitting} style={{
-            width: '100%', padding: '12px', borderRadius: T.radius, border: 'none',
-            background: submitting ? T.border : T.accent, color: '#fff',
-            fontSize: '14px', fontWeight: 600, cursor: submitting ? 'default' : 'pointer',
-            fontFamily: T.fontSans,
+            width: '100%', padding: '13px', borderRadius: T.radius, border: 'none',
+            background: submitting ? T.border : `linear-gradient(135deg, ${T.accent}, #6366f1)`,
+            color: '#fff', fontSize: '14px', fontWeight: 600,
+            cursor: submitting ? 'default' : 'pointer', fontFamily: T.fontSans,
+            boxShadow: submitting ? 'none' : T.accentGlow,
+            transition: `all 0.25s ${T.ease}`,
           }}>{submitting ? 'Creating...' : 'Create Bug'}</button>
         </form>
       </Card>

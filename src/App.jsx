@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { T } from './styles/tokens';
+import { T, glass } from './styles/tokens';
 import { useBugs } from './hooks/useBugs';
 import { fetchAuthStatus } from './lib/api';
 import Header from './components/Header';
@@ -35,9 +35,11 @@ function LoginPage({ onLogin }) {
   };
 
   const inputStyle = {
-    width: '100%', padding: '10px 12px', borderRadius: '8px', border: `1px solid ${T.border}`,
-    background: T.bg, color: T.text, fontSize: '14px', fontFamily: T.fontSans, outline: 'none',
-    boxSizing: 'border-box',
+    width: '100%', padding: '12px 16px', borderRadius: T.radius,
+    border: `1px solid ${T.border}`,
+    background: 'rgba(255, 255, 255, 0.03)', color: T.text,
+    fontSize: '14px', fontFamily: T.fontSans, outline: 'none',
+    boxSizing: 'border-box', transition: `all 0.25s ${T.ease}`,
   };
 
   return (
@@ -46,29 +48,41 @@ function LoginPage({ onLogin }) {
       alignItems: 'center', justifyContent: 'center', fontFamily: T.fontSans,
     }}>
       <form onSubmit={handleSubmit} style={{
-        background: T.surface, border: `1px solid ${T.border}`, borderRadius: T.radiusLg,
-        padding: '48px 40px', maxWidth: 380, width: '100%',
+        ...glass, borderRadius: T.radiusXl,
+        padding: '52px 44px', maxWidth: 400, width: '100%',
+        boxShadow: `${T.accentGlow}, ${T.shadowLg}`,
       }}>
         <div style={{
-          width: 48, height: 48, borderRadius: '12px', background: T.accent,
+          width: 52, height: 52, borderRadius: T.radiusLg,
+          background: `linear-gradient(135deg, ${T.accent}, #6366f1)`,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: '24px', margin: '0 auto 20px',
+          fontSize: '26px', margin: '0 auto 24px',
+          boxShadow: T.accentGlow,
         }}>🛡️</div>
-        <h1 style={{ fontSize: '22px', fontWeight: 700, color: T.text, margin: '0 0 8px', fontFamily: T.font, textAlign: 'center' }}>nobugs</h1>
-        <p style={{ fontSize: '14px', color: T.textDim, margin: '0 0 28px', lineHeight: 1.5, textAlign: 'center' }}>
+        <h1 style={{
+          fontSize: '24px', fontWeight: 700, color: T.text,
+          margin: '0 0 8px', fontFamily: T.fontSans, textAlign: 'center',
+          letterSpacing: '-0.5px',
+        }}>nobugs</h1>
+        <p style={{
+          fontSize: '14px', color: T.textDim, margin: '0 0 32px',
+          lineHeight: 1.6, textAlign: 'center', fontFamily: T.fontSans,
+        }}>
           Enter your email and invite code to sign in.
         </p>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           <input type="email" placeholder="Email" required value={email}
             onChange={(e) => setEmail(e.target.value)} style={inputStyle} />
           <input type="password" placeholder="Invite code" required value={code}
             onChange={(e) => setCode(e.target.value)} style={inputStyle} />
-          {err && <div style={{ fontSize: '13px', color: T.critical }}>{err}</div>}
+          {err && <div style={{ fontSize: '13px', color: T.critical, fontFamily: T.fontSans }}>{err}</div>}
           <button type="submit" disabled={submitting} style={{
-            padding: '10px 24px', borderRadius: '8px', border: 'none',
-            background: T.accent, color: '#fff', fontSize: '14px', fontWeight: 600,
+            padding: '12px 24px', borderRadius: T.radius, border: 'none',
+            background: `linear-gradient(135deg, ${T.accent}, #6366f1)`,
+            color: '#fff', fontSize: '14px', fontWeight: 600,
             cursor: submitting ? 'wait' : 'pointer', fontFamily: T.fontSans,
             opacity: submitting ? 0.7 : 1,
+            boxShadow: T.accentGlow, transition: `all 0.25s ${T.ease}`,
           }}>{submitting ? 'Signing in...' : 'Sign in'}</button>
         </div>
       </form>
@@ -100,8 +114,17 @@ export default function App() {
     return (
       <div style={{
         minHeight: '100vh', background: T.bg, display: 'flex',
-        alignItems: 'center', justifyContent: 'center', color: T.textDim, fontFamily: T.font,
-      }}>Loading...</div>
+        alignItems: 'center', justifyContent: 'center', color: T.textDim, fontFamily: T.fontSans,
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{
+            width: 8, height: 8, borderRadius: '50%', background: T.accent,
+            boxShadow: `0 0 12px ${T.accent}`,
+            animation: 'glowPulse 2s ease-in-out infinite',
+          }} />
+          Loading...
+        </div>
+      </div>
     );
   }
 
@@ -114,8 +137,17 @@ export default function App() {
       return (
         <div style={{
           minHeight: '100vh', background: T.bg, display: 'flex',
-          alignItems: 'center', justifyContent: 'center', color: T.textDim, fontFamily: T.font,
-        }}>Loading bugs...</div>
+          alignItems: 'center', justifyContent: 'center', color: T.textDim, fontFamily: T.fontSans,
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{
+              width: 8, height: 8, borderRadius: '50%', background: T.accent,
+              boxShadow: `0 0 12px ${T.accent}`,
+              animation: 'glowPulse 2s ease-in-out infinite',
+            }} />
+            Loading bugs...
+          </div>
+        </div>
       );
     }
 
@@ -124,9 +156,9 @@ export default function App() {
         <div style={{
           minHeight: '100vh', background: T.bg, display: 'flex',
           alignItems: 'center', justifyContent: 'center', color: T.critical,
-          fontFamily: T.font, flexDirection: 'column', gap: 12,
+          fontFamily: T.fontSans, flexDirection: 'column', gap: 12,
         }}>
-          <div>Error: {error}</div>
+          <div style={{ fontWeight: 600 }}>Error: {error}</div>
           <div style={{ fontSize: '13px', color: T.textDim }}>Check your .env configuration and server connection.</div>
         </div>
       );
@@ -152,8 +184,8 @@ export default function App() {
       {view === 'project' && <ProjectView bugs={bugs} meta={meta} onSelect={setDetailBug} />}
       {view === 'roadmap' && <RoadmapView bugs={bugs} meta={meta} onSelect={setDetailBug} />}
       <div style={{
-        padding: '12px 32px', borderTop: `1px solid ${T.border}`,
-        fontSize: '11px', color: T.textDim, fontFamily: T.font,
+        padding: '14px 32px', borderTop: `1px solid ${T.border}`,
+        fontSize: '11px', color: T.textDim, fontFamily: T.fontSans,
         display: 'flex', justifyContent: 'space-between',
       }}>
         <span>nobugs — {bugs.length} bugs shown</span>

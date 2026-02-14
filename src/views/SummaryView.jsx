@@ -1,5 +1,5 @@
 import { T, STATUSES, PRIORITIES, statusColor, priorityColor } from '../styles/tokens';
-import { StatCard, BugRow, Card, SectionLabel, Avatar, ProgressBar } from '../components/ui';
+import { StatCard, BugRow, TableHeader, Card, SectionLabel, Avatar, ProgressBar } from '../components/ui';
 
 export default function SummaryView({ bugs, meta, onSelect }) {
   const done = bugs.filter((b) => b.status === 'Done').length;
@@ -25,16 +25,16 @@ export default function SummaryView({ bugs, meta, onSelect }) {
         <StatCard label="In Review" value={inRev} color={T.inReview} sub="awaiting merge" />
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 28 }}>
-        <Card style={{ padding: '20px 24px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 28 }}>
+        <Card style={{ padding: '22px 26px' }}>
           <SectionLabel>Status Breakdown</SectionLabel>
           {(meta.statuses?.length > 0 ? meta.statuses : STATUSES).map((s) => {
             const count = bugs.filter((b) => b.status === s).length;
             const pct = bugs.length > 0 ? ((count / bugs.length) * 100).toFixed(0) : 0;
             return (
-              <div key={s} style={{ marginBottom: 12 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                  <span style={{ fontSize: '13px' }}>{s}</span>
+              <div key={s} style={{ marginBottom: 14 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                  <span style={{ fontSize: '13px', fontFamily: T.fontSans, fontWeight: 500 }}>{s}</span>
                   <span style={{ fontSize: '12px', fontFamily: T.font, color: T.textDim }}>{count} ({pct}%)</span>
                 </div>
                 <ProgressBar value={count} max={bugs.length} color={statusColor(s)} />
@@ -42,15 +42,15 @@ export default function SummaryView({ bugs, meta, onSelect }) {
             );
           })}
         </Card>
-        <Card style={{ padding: '20px 24px' }}>
+        <Card style={{ padding: '22px 26px' }}>
           <SectionLabel>Priority Breakdown</SectionLabel>
           {(meta.priorities?.length > 0 ? meta.priorities : PRIORITIES).map((p) => {
             const count = bugs.filter((b) => b.priority === p).length;
             const pct = bugs.length > 0 ? ((count / bugs.length) * 100).toFixed(0) : 0;
             return (
-              <div key={p} style={{ marginBottom: 12 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                  <span style={{ fontSize: '13px' }}>{p}</span>
+              <div key={p} style={{ marginBottom: 14 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                  <span style={{ fontSize: '13px', fontFamily: T.fontSans, fontWeight: 500 }}>{p}</span>
                   <span style={{ fontSize: '12px', fontFamily: T.font, color: T.textDim }}>{count} ({pct}%)</span>
                 </div>
                 <ProgressBar value={count} max={bugs.length} color={priorityColor(p)} />
@@ -60,14 +60,14 @@ export default function SummaryView({ bugs, meta, onSelect }) {
         </Card>
       </div>
 
-      <Card style={{ padding: '20px 24px', marginBottom: 28 }}>
-        <SectionLabel>Workload by Member (active bugs)</SectionLabel>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+      <Card style={{ padding: '22px 26px', marginBottom: 28 }}>
+        <SectionLabel>Workload by Member</SectionLabel>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14 }}>
           {memberLoad.map((m) => (
             <div key={m.name} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <Avatar name={m.name} size={32} />
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: '12px', fontWeight: 500, marginBottom: 3 }}>{m.name.split(' ')[0]}</div>
+                <div style={{ fontSize: '12px', fontWeight: 500, marginBottom: 4, fontFamily: T.fontSans }}>{m.name.split(' ')[0]}</div>
                 <ProgressBar value={m.count} max={maxLoad} color={m.count > 6 ? T.critical : T.accent} height={4} />
               </div>
               <span style={{ fontFamily: T.font, fontSize: '12px', color: m.count > 6 ? T.critical : T.textDim, fontWeight: 600 }}>{m.count}</span>
@@ -77,9 +77,10 @@ export default function SummaryView({ bugs, meta, onSelect }) {
       </Card>
 
       <Card style={{ overflow: 'hidden' }}>
-        <div style={{ padding: '16px 24px', borderBottom: `1px solid ${T.border}` }}>
-          <SectionLabel>Critical & High Priority (Active)</SectionLabel>
+        <div style={{ padding: '16px 26px', borderBottom: `1px solid ${T.border}` }}>
+          <SectionLabel>Critical & High Priority</SectionLabel>
         </div>
+        <TableHeader />
         {bugs.filter((b) => (b.priority === 'Critical' || b.priority === 'High' || b.priority.startsWith('P1') || b.priority.startsWith('P2')) && b.status !== 'Done').slice(0, 10)
           .map((bug) => <BugRow key={bug.id} bug={bug} onClick={onSelect} />)}
       </Card>

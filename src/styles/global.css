@@ -1,35 +1,39 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+
 :root {
-  --bg: #0f1117;
-  --surface: #181b24;
-  --surface-hover: #1e2230;
-  --border: #272c3a;
-  --text: #e2e4ea;
-  --text-dim: #8b90a0;
-  --accent: #6c5ce7;
-  --accent-soft: rgba(108, 92, 231, 0.12);
+  --bg: #0a0b10;
+  --bg-subtle: #0e1018;
+  --surface: rgba(18, 20, 31, 0.6);
+  --surface-solid: #12141f;
+  --surface-hover: rgba(26, 29, 46, 0.8);
+  --border: rgba(255, 255, 255, 0.06);
+  --text: #e8e9ed;
+  --text-dim: #6b7084;
+  --accent: #8b7cf6;
+  --accent-soft: rgba(139, 124, 246, 0.1);
 
-  --critical: #ff6b6b;
-  --critical-soft: rgba(255, 107, 107, 0.12);
-  --high: #ffa94d;
-  --high-soft: rgba(255, 169, 77, 0.12);
-  --medium: #ffd43b;
-  --medium-soft: rgba(255, 212, 59, 0.12);
-  --low: #69db7c;
-  --low-soft: rgba(105, 219, 124, 0.12);
+  --critical: #f47171;
+  --critical-soft: rgba(244, 113, 113, 0.1);
+  --high: #f0a86e;
+  --high-soft: rgba(240, 168, 110, 0.1);
+  --medium: #e8d374;
+  --medium-soft: rgba(232, 211, 116, 0.1);
+  --low: #7dd895;
+  --low-soft: rgba(125, 216, 149, 0.1);
 
-  --status-open: #74c0fc;
-  --status-open-soft: rgba(116, 192, 252, 0.12);
-  --status-progress: #da77f2;
-  --status-progress-soft: rgba(218, 119, 242, 0.12);
-  --status-review: #ffa94d;
-  --status-review-soft: rgba(255, 169, 77, 0.12);
-  --status-done: #69db7c;
-  --status-done-soft: rgba(105, 219, 124, 0.12);
+  --status-open: #7eb8f0;
+  --status-open-soft: rgba(126, 184, 240, 0.1);
+  --status-progress: #c48df0;
+  --status-progress-soft: rgba(196, 141, 240, 0.1);
+  --status-review: #f0a86e;
+  --status-review-soft: rgba(240, 168, 110, 0.1);
+  --status-done: #7dd895;
+  --status-done-soft: rgba(125, 216, 149, 0.1);
 
-  --radius: 8px;
-  --radius-lg: 12px;
+  --radius: 12px;
+  --radius-lg: 16px;
   --font-mono: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
-  --font-sans: 'DM Sans', 'Segoe UI', sans-serif;
+  --font-sans: 'Outfit', sans-serif;
 }
 
 * {
@@ -40,25 +44,41 @@
 
 body {
   background: var(--bg);
+  background-image:
+    radial-gradient(ellipse 80% 50% at 20% 40%, rgba(139, 124, 246, 0.06) 0%, transparent 100%),
+    radial-gradient(ellipse 60% 40% at 80% 60%, rgba(99, 102, 241, 0.04) 0%, transparent 100%),
+    radial-gradient(ellipse 40% 30% at 50% 100%, rgba(139, 124, 246, 0.03) 0%, transparent 100%);
+  background-attachment: fixed;
   color: var(--text);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: var(--text-dim); }
+::-webkit-scrollbar-thumb { background: rgba(139, 124, 246, 0.15); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(139, 124, 246, 0.3); }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(8px); }
+  from { opacity: 0; transform: translateY(12px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes slideIn {
-  from { opacity: 0; transform: translateX(20px); }
+  from { opacity: 0; transform: translateX(24px); }
   to { opacity: 1; transform: translateX(0); }
 }
 
-.fade-in { animation: fadeIn 0.3s ease forwards; }
-.slide-in { animation: slideIn 0.3s ease forwards; }
+@keyframes glowPulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+.fade-in { animation: fadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+.slide-in { animation: slideIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+
+::selection {
+  background: rgba(139, 124, 246, 0.3);
+  color: #fff;
+}
