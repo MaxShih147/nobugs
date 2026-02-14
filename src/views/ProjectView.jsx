@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { T, glass, PRIORITIES, projectColor } from '../styles/tokens';
+import { T, glass, PRIORITIES, projectColor, stripEmoji } from '../styles/tokens';
 import { Badge, BugRow, TableHeader, Card, ProgressBar } from '../components/ui';
 
 export default function ProjectView({ bugs, meta, onSelect }) {
@@ -30,13 +30,14 @@ export default function ProjectView({ bugs, meta, onSelect }) {
           <div key={p.name} onClick={() => setSelected(selected === p.name ? null : p.name)} style={{
             ...glass,
             background: selected === p.name ? `${p.color}11` : T.surface,
-            border: `1px solid ${selected === p.name ? `${p.color}40` : T.border}`,
+            borderWidth: '3px 1px 1px 1px',
+            borderStyle: 'solid',
+            borderColor: `${p.color} ${selected === p.name ? `${p.color}40` : T.border} ${selected === p.name ? `${p.color}40` : T.border}`,
             boxShadow: selected === p.name ? `0 0 40px ${p.color}15, ${T.shadow}` : T.shadow,
             borderRadius: T.radiusLg, padding: '18px 22px', cursor: 'pointer',
             transition: `all 0.3s ${T.ease}`,
-            borderTop: `3px solid ${p.color}`,
           }}>
-            <div style={{ fontSize: '15px', fontWeight: 700, marginBottom: 10, color: p.color, fontFamily: T.fontSans }}>{p.name}</div>
+            <div style={{ fontSize: '15px', fontWeight: 700, marginBottom: 10, color: p.color, fontFamily: T.fontSans }}>{stripEmoji(p.name)}</div>
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
               <Badge color={T.text} bg="rgba(255, 255, 255, 0.04)">{p.open} open</Badge>
               <Badge color={T.done} bg={T.doneSoft}>{p.done} done</Badge>
