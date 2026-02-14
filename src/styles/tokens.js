@@ -71,12 +71,12 @@ export const PRIORITIES = ['Critical', 'High', 'Medium', 'Low'];
 export const STATUSES = ['Open', 'In Progress', 'In Review', 'Done'];
 
 // Strip emojis and whitespace to get clean priority label
-export function cleanPriority(p) {
+export function stripEmoji(p) {
   return p.replace(/[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '').trim();
 }
 
 function matchPriority(p) {
-  const c = cleanPriority(p).toLowerCase();
+  const c = stripEmoji(p).toLowerCase();
   if (c === 'critical' || c === 'p1' || c === '1') return 'critical';
   if (c === 'high' || c === 'p2' || c === '2') return 'high';
   if (c === 'medium' || c === 'p3' || c === '3') return 'medium';

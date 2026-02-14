@@ -1,4 +1,4 @@
-import { T, glass, projectColor } from '../styles/tokens';
+import { T, glass, projectColor, stripEmoji } from '../styles/tokens';
 import { PriorityBadge, StatusBadge } from './ui';
 
 export default function BugDetail({ bug, onBack }) {
@@ -6,7 +6,7 @@ export default function BugDetail({ bug, onBack }) {
 
   const fields = [
     ['Assignee', bug.assignee, null],
-    bug.project ? ['Project', bug.project, projectColor(bug.project)] : ['Type', bug.type || '\u2014', null],
+    bug.project ? ['Project', stripEmoji(bug.project), projectColor(bug.project)] : ['Type', stripEmoji(bug.type || '') || '\u2014', null],
     ['Sprint', bug.sprint || '\u2014', null],
     ['Due Date', bug.due || 'No due date', null],
     ['Created', bug.created, null],

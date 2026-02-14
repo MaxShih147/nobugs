@@ -1,4 +1,4 @@
-import { T, glass, priorityColor, statusColor, statusSoft, projectColor } from '../styles/tokens';
+import { T, glass, priorityColor, statusColor, statusSoft, projectColor, stripEmoji } from '../styles/tokens';
 import { Badge, ProgressBar } from '../components/ui';
 
 export default function RoadmapView({ bugs, meta, onSelect }) {
@@ -62,7 +62,7 @@ export default function RoadmapView({ bugs, meta, onSelect }) {
                       overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: T.fontSans,
                     }}>{bug.title}</div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: '10px', color: projectColor(bug.project || bug.type || ''), fontFamily: T.fontSans }}>{bug.project || bug.type || ''}</span>
+                      <span style={{ fontSize: '10px', color: projectColor(bug.project || bug.type || ''), fontFamily: T.fontSans }}>{stripEmoji(bug.project || bug.type || '')}</span>
                       <span style={{ fontSize: '10px', color: T.textDim, fontFamily: T.fontSans }}>{bug.assignee.split(' ')[0]}</span>
                     </div>
                   </div>

@@ -1,4 +1,4 @@
-import { T, glass, priorityColor, prioritySoft, priorityDots, cleanPriority, statusColor, statusSoft, projectColor } from '../styles/tokens';
+import { T, glass, priorityColor, prioritySoft, priorityDots, stripEmoji, statusColor, statusSoft, projectColor } from '../styles/tokens';
 
 export function Badge({ children, color, bg, style = {} }) {
   return (
@@ -11,7 +11,7 @@ export function Badge({ children, color, bg, style = {} }) {
 }
 
 export function PriorityBadge({ priority }) {
-  return <Badge color={priorityColor(priority)} bg={prioritySoft(priority)}>{cleanPriority(priority)}</Badge>;
+  return <Badge color={priorityColor(priority)} bg={prioritySoft(priority)}>{stripEmoji(priority)}</Badge>;
 }
 
 export function StatusBadge({ status }) {
@@ -92,7 +92,7 @@ export function BugRow({ bug, onClick }) {
       <PriorityBadge priority={bug.priority} />
       <StatusBadge status={bug.status} />
       <span style={{ fontSize: '12px', color: T.textDim, fontFamily: T.fontSans }}>{bug.assignee.split(' ')[0]}</span>
-      <span style={{ fontSize: '12px', color: projectColor(bug.project || bug.type || ''), fontFamily: T.fontSans }}>{bug.project || bug.type || ''}</span>
+      <span style={{ fontSize: '12px', color: projectColor(bug.project || bug.type || ''), fontFamily: T.fontSans }}>{stripEmoji(bug.project || bug.type || '')}</span>
       <span style={{ fontSize: '11px', color: T.textDim, fontFamily: T.font }}>{bug.due || '\u2014'}</span>
     </div>
   );
