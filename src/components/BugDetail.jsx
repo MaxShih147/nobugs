@@ -10,7 +10,7 @@ export default function BugDetail({ bug, onBack }) {
     ['Sprint', bug.sprint || '\u2014', null],
     ['Due Date', bug.due || 'No due date', null],
     ['Created', bug.created, null],
-    bug.tags ? ['Tags', bug.tags.join(', ') || '\u2014', null] : ['Scope', bug.scope || '\u2014', null],
+    bug.tags ? ['Tags', bug.tags.join(', ') || '\u2014', null] : ['Scope', stripEmoji(bug.scope || '') || '\u2014', null],
   ];
 
   return (
