@@ -70,11 +70,28 @@ export const glass = {
 export const PRIORITIES = ['Critical', 'High', 'Medium', 'Low'];
 export const STATUSES = ['Open', 'In Progress', 'In Review', 'Done'];
 
+// Strip emojis and whitespace to get clean priority label
+export function cleanPriority(p) {
+  return p.replace(/[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '').trim();
+}
+
+function matchPriority(p) {
+  const c = cleanPriority(p).toLowerCase();
+  if (c === 'critical' || c === 'p1' || c === '1') return 'critical';
+  if (c === 'high' || c === 'p2' || c === '2') return 'high';
+  if (c === 'medium' || c === 'p3' || c === '3') return 'medium';
+  if (c === 'low' || c === 'p4' || c === '4') return 'low';
+  return null;
+}
+
 export const priorityColor = (p) =>
-  ({ Critical: T.critical, High: T.high, Medium: T.medium, Low: T.low }[p] || T.textDim);
+  ({ critical: T.critical, high: T.high, medium: T.medium, low: T.low }[matchPriority(p)] || T.textDim);
 
 export const prioritySoft = (p) =>
-  ({ Critical: T.criticalSoft, High: T.highSoft, Medium: T.mediumSoft, Low: T.lowSoft }[p] || 'transparent');
+  ({ critical: T.criticalSoft, high: T.highSoft, medium: T.mediumSoft, low: T.lowSoft }[matchPriority(p)] || 'transparent');
+
+export const priorityDots = (p) =>
+  ({ critical: 5, high: 4, medium: 3, low: 2 }[matchPriority(p)] || 1);
 
 export const statusColor = (s) =>
   ({ Open: T.open, 'In Progress': T.inProgress, 'In Review': T.inReview, Done: T.done }[s] || T.textDim);

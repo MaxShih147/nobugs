@@ -1,4 +1,4 @@
-import { T, STATUSES, PRIORITIES, statusColor, priorityColor } from '../styles/tokens';
+import { T, STATUSES, PRIORITIES, statusColor, priorityColor, cleanPriority } from '../styles/tokens';
 import { StatCard, BugRow, TableHeader, Card, SectionLabel, Avatar, ProgressBar } from '../components/ui';
 
 export default function SummaryView({ bugs, meta, onSelect }) {
@@ -50,7 +50,7 @@ export default function SummaryView({ bugs, meta, onSelect }) {
             return (
               <div key={p} style={{ marginBottom: 14 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                  <span style={{ fontSize: '13px', fontFamily: T.fontSans, fontWeight: 500 }}>{p}</span>
+                  <span style={{ fontSize: '13px', fontFamily: T.fontSans, fontWeight: 500 }}>{cleanPriority(p)}</span>
                   <span style={{ fontSize: '12px', fontFamily: T.font, color: T.textDim }}>{count} ({pct}%)</span>
                 </div>
                 <ProgressBar value={count} max={bugs.length} color={priorityColor(p)} />
