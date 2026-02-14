@@ -13,7 +13,6 @@ function getMockBugs() {
 async function authFetch(url, options) {
   const res = await fetch(url, options);
   if (res.status === 401) {
-    window.location.href = '/auth/login';
     throw new Error('Not authenticated');
   }
   return res;

@@ -80,7 +80,7 @@ export default function App() {
   const [view, setView] = useState('summary');
   const [detailBug, setDetailBug] = useState(null);
   const [authState, setAuthState] = useState({ loading: true, authEnabled: false, authenticated: false, user: null });
-  const { bugs, meta, loading, error, filters, createBug } = useBugs();
+  const { bugs, meta, loading, error, filters, createBug, reload } = useBugs();
 
   useEffect(() => {
     fetchAuthStatus()
@@ -98,7 +98,7 @@ export default function App() {
   }
 
   if (authState.authEnabled && !authState.authenticated) {
-    return <LoginPage onLogin={(user) => setAuthState({ loading: false, authEnabled: true, authenticated: true, user })} />;
+    return <LoginPage onLogin={(user) => { setAuthState({ loading: false, authEnabled: true, authenticated: true, user }); reload(); }} />;
   }
 
   if (loading) {
@@ -110,7 +110,7 @@ export default function App() {
     );
   }
 
-  if (error) {
+  if (error && !(authState.authEnabled && error === 'Not authenticated')) {
     return (
       <div style={{
         minHeight: '100vh', background: T.bg, display: 'flex',
