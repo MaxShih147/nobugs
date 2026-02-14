@@ -5,7 +5,8 @@ import cookieParser from 'cookie-parser';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { getAllBugs, getBug, updateBugInNotion, createBugInNotion, getMeta } from './server/notion.js';
-import { createAuthRouter, requireAuth, isAuthEnabled } from './server/auth.js';
+import { createAuthRouter, requireAuth, requireAdmin, isAuthEnabled } from './server/auth.js';
+import { getMemberMappings, saveMemberMappings } from './server/members.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -38,6 +39,25 @@ app.post('/api/bugs', async (req, res) => {
 });
 app.get('/api/meta', async (req, res) => {
   try { res.json(await getMeta()); } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.get('/api/members', async (req, res) => {
+  try {
+    const saved = getMemberMappings();
+    const bugs = await getAllBugs().catch(() => []);
+    const nameSet = new Set();
+    (bugs || []).forEach((b) => { if (b.assignee) nameSet.add(b.assignee); });
+    res.json({ ...saved, discoveredNames: [...nameSet].sort() });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.put('/api/members', requireAdmin, (req, res) => {
+  try {
+    const { mappings } = req.body;
+    if (!Array.isArray(mappings)) return res.status(400).json({ error: 'mappings must be an array' });
+    const result = saveMemberMappings(mappings, req.user?.email || 'unknown');
+    res.json(result);
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 // Static frontend — assets served without auth so login page renders

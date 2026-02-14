@@ -10,6 +10,7 @@ import MemberView from './views/MemberView';
 import ProjectView from './views/ProjectView';
 import RoadmapView from './views/RoadmapView';
 import CreateView from './views/CreateView';
+import AdminView from './views/AdminView';
 
 function LoginPage({ onLogin }) {
   const [email, setEmail] = useState('');
@@ -133,6 +134,7 @@ export default function App() {
   return (
     <div style={{ minHeight: '100vh', background: T.bg }}>
       <Header view={view} onViewChange={setView} filters={filters} meta={meta} onNewBug={() => setView('create')} user={authState.user} />
+      {view === 'admin' && authState.user?.isAdmin && <AdminView user={authState.user} />}
       {view === 'create' && <CreateView meta={meta} onCreate={createBug} onCancel={() => setView('summary')} />}
       {view === 'summary' && <SummaryView bugs={bugs} meta={meta} onSelect={setDetailBug} />}
       {view === 'kanban' && <KanbanView bugs={bugs} meta={meta} onSelect={setDetailBug} />}

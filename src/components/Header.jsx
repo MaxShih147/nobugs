@@ -23,7 +23,7 @@ function Select({ value, onChange, options, placeholder }) {
 }
 
 function UserMenu({ user }) {
-  const displayName = user.name || user.email;
+  const displayName = user.memberName || user.name || user.email;
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
       {user.avatar
@@ -41,6 +41,10 @@ function UserMenu({ user }) {
 }
 
 export default function Header({ view, onViewChange, filters, meta, onNewBug, user }) {
+  const views = user?.isAdmin
+    ? [...VIEWS, { id: 'admin', label: '⚙️ Admin' }]
+    : VIEWS;
+
   return (
     <div style={{
       padding: '16px 32px', borderBottom: `1px solid ${T.border}`,
@@ -57,7 +61,7 @@ export default function Header({ view, onViewChange, filters, meta, onNewBug, us
         </div>
         <div style={{ height: 20, width: 1, background: T.border }} />
         <div style={{ display: 'flex', gap: 2 }}>
-          {VIEWS.map((v) => (
+          {views.map((v) => (
             <Pill key={v.id} active={view === v.id} onClick={() => onViewChange(v.id)}>{v.label}</Pill>
           ))}
         </div>

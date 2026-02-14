@@ -3,7 +3,8 @@ import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import { getAllBugs, getBug, updateBugInNotion, createBugInNotion, getMeta } from './notion.js';
-import { createAuthRouter, requireAuth, isAuthEnabled } from './auth.js';
+import { createAuthRouter, requireAuth, requireAdmin, isAuthEnabled } from './auth.js';
+import { getMemberMappings, saveMemberMappings } from './members.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -46,6 +47,27 @@ app.post('/api/bugs', async (req, res) => {
 app.get('/api/meta', async (req, res) => {
   try { res.json(await getMeta()); }
   catch (err) { console.error('Failed to fetch meta:', err.message); res.status(500).json({ error: err.message }); }
+});
+
+app.get('/api/members', async (req, res) => {
+  try {
+    const saved = getMemberMappings();
+    const bugs = await getAllBugs().catch(() => []);
+    const nameSet = new Set();
+    (bugs || []).forEach((b) => {
+      if (b.assignee) nameSet.add(b.assignee);
+    });
+    res.json({ ...saved, discoveredNames: [...nameSet].sort() });
+  } catch (err) { console.error('Failed to fetch members:', err.message); res.status(500).json({ error: err.message }); }
+});
+
+app.put('/api/members', requireAdmin, (req, res) => {
+  try {
+    const { mappings } = req.body;
+    if (!Array.isArray(mappings)) return res.status(400).json({ error: 'mappings must be an array' });
+    const result = saveMemberMappings(mappings, req.user?.email || 'unknown');
+    res.json(result);
+  } catch (err) { console.error('Failed to save members:', err.message); res.status(500).json({ error: err.message }); }
 });
 
 app.listen(PORT, () => {

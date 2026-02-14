@@ -80,6 +80,33 @@ export async function createBug(bug) {
   return res.json();
 }
 
+export async function fetchMembers() {
+  if (USE_MOCK) {
+    return {
+      mappings: [],
+      discoveredNames: [...MOCK_MEMBERS],
+      updatedAt: null,
+      updatedBy: null,
+    };
+  }
+  const res = await authFetch(`${API_BASE}/members`);
+  if (!res.ok) throw new Error(`Failed to fetch members: ${res.statusText}`);
+  return res.json();
+}
+
+export async function saveMembers(mappings) {
+  if (USE_MOCK) {
+    return { mappings, updatedAt: new Date().toISOString(), updatedBy: 'mock' };
+  }
+  const res = await authFetch(`${API_BASE}/members`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ mappings }),
+  });
+  if (!res.ok) throw new Error(`Failed to save members: ${res.statusText}`);
+  return res.json();
+}
+
 export async function fetchMeta() {
   if (USE_MOCK) {
     return {

@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import jwt from 'jsonwebtoken';
+import { findMemberByEmail } from './members.js';
 
 const JWT_EXPIRY = '8h';
 const COOKIE_NAME = 'nobugs_token';
@@ -17,6 +18,24 @@ function isEmailAllowed(email) {
   const allowed = getAllowedEmails();
   if (allowed.length === 0) return true;
   return allowed.includes(email?.toLowerCase());
+}
+
+function getAdminEmail() {
+  if (process.env.ADMIN_EMAIL) return process.env.ADMIN_EMAIL.trim().toLowerCase();
+  const allowed = getAllowedEmails();
+  return allowed.length > 0 ? allowed[0] : null;
+}
+
+export function isAdmin(email) {
+  const admin = getAdminEmail();
+  if (!admin) return false;
+  return email?.toLowerCase() === admin;
+}
+
+export function requireAdmin(req, res, next) {
+  if (!isAuthEnabled()) return next();
+  if (req.user && isAdmin(req.user.email)) return next();
+  return res.status(403).json({ error: 'Admin access required' });
 }
 
 function signToken(payload) {
@@ -64,6 +83,8 @@ export function createAuthRouter() {
       secure: process.env.NODE_ENV === 'production',
     });
 
+    user.isAdmin = isAdmin(user.email);
+    user.memberName = findMemberByEmail(user.email);
     res.json({ ok: true, user });
   });
 
@@ -78,6 +99,8 @@ export function createAuthRouter() {
 
     if (user) {
       const { iat, exp, ...userData } = user;
+      userData.isAdmin = isAdmin(userData.email);
+      userData.memberName = findMemberByEmail(userData.email);
       return res.json({ authenticated: true, authEnabled: true, user: userData });
     }
     res.json({ authenticated: false, authEnabled: true });
