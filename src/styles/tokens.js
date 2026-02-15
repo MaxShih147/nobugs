@@ -109,10 +109,16 @@ export const statusSoft = (s) =>
   ({ done: T.doneSoft, inProgress: T.inProgressSoft, inReview: T.inReviewSoft, open: T.openSoft }[matchStatus(s)] || 'transparent');
 
 const TYPE_COLORS = { bug: '#f47171', feature: '#8b7cf6', improve: '#5ec4ab' };
+const SCOPE_COLORS = { epic: '#7dd895', story: '#6aabde', task: '#e8d374' };
 
 export function typeColor(t) {
   if (!t) return T.textDim;
   return TYPE_COLORS[t.toLowerCase()] || T.textDim;
+}
+
+export function scopeColor(s) {
+  if (!s) return T.textDim;
+  return SCOPE_COLORS[s.toLowerCase()] || T.textDim;
 }
 
 const PROJECT_PALETTE = ['#8b7cf6', '#5ec4ab', '#e09b6e', '#6aabde', '#dcc96e', '#c97ba5', '#5ec4bc', '#8894a0'];

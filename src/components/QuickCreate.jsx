@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
-import { T, glass, priorityColor, statusColor, typeColor } from '../styles/tokens';
+import { T, glass, priorityColor, statusColor, typeColor, scopeColor } from '../styles/tokens';
 import { parseCommand } from '../lib/commandParser';
 
 const BASE_STATUSES = ['To do', 'Pending', 'In progress', 'Reviewing', 'Done', "Can't reproduce"];
@@ -335,7 +335,9 @@ export default function QuickCreate({ meta, createBug }) {
                 color={statusColor(mergedFields.status)}
                 bg={`${statusColor(mergedFields.status)}18`} />
             )}
-            {mergedFields.scope && <Chip label="scope" value={mergedFields.scope} />}
+            {mergedFields.scope && <Chip label="scope" value={mergedFields.scope}
+                color={scopeColor(mergedFields.scope)}
+                bg={`${scopeColor(mergedFields.scope)}18`} />}
             {mergedFields.assignee && <Chip label="who" value={mergedFields.assignee} />}
             {mergedFields.due && <Chip label="due" value={mergedFields.due} />}
             {mergedFields.sprint && <Chip label="sprint" value={mergedFields.sprint} />}
@@ -386,7 +388,8 @@ export default function QuickCreate({ meta, createBug }) {
               )}
               {hasScopes && (
                 <SelectField label="Scope" value={mergedFields.scope || ''}
-                  onChange={(v) => handleFormChange('scope', v)} options={meta.scopes} />
+                  onChange={(v) => handleFormChange('scope', v)} options={meta.scopes}
+                  colorFn={scopeColor} />
               )}
               {hasSizes && (
                 <SelectField label="Size" value={mergedFields.size || ''}

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { T, glass, projectColor, stripEmoji } from '../styles/tokens';
+import { T, glass, projectColor, typeColor, scopeColor, stripEmoji } from '../styles/tokens';
 import { PriorityBadge, StatusBadge } from './ui';
 import { fetchBug } from '../lib/api';
 
@@ -21,11 +21,11 @@ export default function BugDetail({ bug, onBack }) {
 
   const fields = [
     ['Assignee', bug.assignee, null],
-    bug.project ? ['Project', stripEmoji(bug.project), projectColor(bug.project)] : ['Type', stripEmoji(bug.type || '') || '\u2014', null],
+    bug.project ? ['Project', stripEmoji(bug.project), projectColor(bug.project)] : ['Type', stripEmoji(bug.type || '') || '\u2014', typeColor(bug.type || '')],
     ['Sprint', bug.sprint || '\u2014', null],
     ['Due Date', bug.due || 'No due date', null],
     ['Created', bug.created, null],
-    bug.tags ? ['Tags', bug.tags.join(', ') || '\u2014', null] : ['Scope', stripEmoji(bug.scope || '') || '\u2014', null],
+    bug.tags ? ['Tags', bug.tags.join(', ') || '\u2014', null] : ['Scope', stripEmoji(bug.scope || '') || '\u2014', scopeColor(bug.scope || '')],
   ];
 
   return (

@@ -1,4 +1,4 @@
-import { T, glass, STATUSES, statusColor, priorityColor, projectColor, stripEmoji } from '../styles/tokens';
+import { T, glass, STATUSES, statusColor, priorityColor, projectColor, scopeColor, typeColor, stripEmoji } from '../styles/tokens';
 import { Avatar } from '../components/ui';
 
 export default function KanbanView({ bugs, meta, onSelect }) {
@@ -59,12 +59,12 @@ export default function KanbanView({ bugs, meta, onSelect }) {
                     ))}
                     {bug.type && <span style={{
                       fontSize: '10px', padding: '2px 8px', borderRadius: T.radiusSm,
-                      background: 'rgba(255, 255, 255, 0.04)', color: T.textDim,
+                      background: 'rgba(255, 255, 255, 0.04)', color: typeColor(bug.type),
                       fontFamily: T.fontSans, fontWeight: 500,
                     }}>{stripEmoji(bug.type)}</span>}
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <span style={{ fontSize: '11px', color: projectColor(bug.project || bug.scope || ''), fontWeight: 500, fontFamily: T.fontSans }}>{stripEmoji(bug.project || bug.scope || '')}</span>
+                    <span style={{ fontSize: '11px', color: bug.project ? projectColor(bug.project) : scopeColor(bug.scope || ''), fontWeight: 500, fontFamily: T.fontSans }}>{stripEmoji(bug.project || bug.scope || '')}</span>
                     <Avatar name={bug.assignee} />
                   </div>
                 </div>
