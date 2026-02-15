@@ -59,6 +59,7 @@ nobugs/
 - **`useMemo`** for derived/filtered data in hooks
 - **Default exports** for all components and views
 - **Dark theme** — monochrome base with colored status/priority indicators
+- **Icons** — all icons must be inline SVG, uniform style: 15x15 size, viewBox `0 0 24 24`, stroke-based (`fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"`). Wrap in fixed-size square buttons (28x26). Never use emojis or mixed text/unicode characters for icons. See `MarkdownToolbar` in `BugDetail.jsx` for reference.
 
 ## Data Flow
 
