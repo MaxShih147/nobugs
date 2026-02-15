@@ -1,7 +1,7 @@
 import { T, STATUSES, PRIORITIES, statusColor, priorityColor, stripEmoji } from '../styles/tokens';
 import { StatCard, BugRow, TableHeader, Card, SectionLabel, Avatar, ProgressBar } from '../components/ui';
 
-export default function SummaryView({ bugs, meta, onSelect }) {
+export default function SummaryView({ bugs, allBugs, meta, onSelect }) {
   const done = bugs.filter((b) => b.status === 'Done').length;
   const active = bugs.length - done;
   const inRev = bugs.filter((b) => b.status === 'In Review' || b.status === 'Reviewing').length;
@@ -76,12 +76,25 @@ export default function SummaryView({ bugs, meta, onSelect }) {
         </div>
       </Card>
 
-      <Card style={{ overflow: 'hidden' }}>
+      <Card style={{ overflow: 'hidden', marginBottom: 28 }}>
         <div style={{ padding: '16px 26px', borderBottom: `1px solid ${T.border}` }}>
           <SectionLabel>Critical & High Priority</SectionLabel>
         </div>
         <TableHeader />
-        {bugs.filter((b) => (b.priority === 'Critical' || b.priority === 'High' || b.priority.startsWith('P1') || b.priority.startsWith('P2')) && b.status !== 'Done').slice(0, 10)
+        {(() => {
+          const critBugs = (allBugs || bugs).filter((b) => (b.priority === 'Critical' || b.priority === 'High' || b.priority.startsWith('P1') || b.priority.startsWith('P2')) && b.status !== 'Done').slice(0, 10);
+          return critBugs.length > 0
+            ? critBugs.map((bug) => <BugRow key={bug.id} bug={bug} onClick={onSelect} />)
+            : <div style={{ padding: 40, textAlign: 'center', color: T.textDim, fontFamily: T.fontSans }}>No critical issues</div>;
+        })()}
+      </Card>
+
+      <Card style={{ overflow: 'hidden' }}>
+        <div style={{ padding: '16px 26px', borderBottom: `1px solid ${T.border}` }}>
+          <SectionLabel>Filtered Results</SectionLabel>
+        </div>
+        <TableHeader />
+        {bugs.filter((b) => b.status !== 'Done').slice(0, 10)
           .map((bug) => <BugRow key={bug.id} bug={bug} onClick={onSelect} />)}
       </Card>
     </div>

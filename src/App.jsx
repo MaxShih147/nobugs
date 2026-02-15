@@ -100,7 +100,7 @@ export default function App() {
   };
   const [detailBug, setDetailBug] = useState(null);
   const [authState, setAuthState] = useState({ loading: true, authEnabled: false, authenticated: false, user: null });
-  const { bugs, meta, loading, error, filters, createBug, reload } = useBugs();
+  const { bugs, allBugs, meta, loading, error, filters, createBug, reload } = useBugs();
 
   const handleSelect = (bug) => setDetailBug(bug);
 
@@ -178,7 +178,7 @@ export default function App() {
       <Header view={view} onViewChange={setView} filters={filters} meta={meta} user={authState.user} />
       <QuickCreate meta={meta} createBug={createBug} />
       {view === 'admin' && authState.user?.isAdmin && <AdminView user={authState.user} />}
-      {view === 'summary' && <SummaryView bugs={bugs} meta={meta} onSelect={handleSelect} />}
+      {view === 'summary' && <SummaryView bugs={bugs} allBugs={allBugs} meta={meta} onSelect={handleSelect} />}
       {view === 'kanban' && <KanbanView bugs={bugs} meta={meta} onSelect={handleSelect} />}
       {view === 'member' && <MemberView bugs={bugs} meta={meta} onSelect={handleSelect} />}
       {view === 'list' && <ListView bugs={bugs} meta={meta} onSelect={handleSelect} />}
