@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { T, glass, PRIORITIES, projectColor, stripEmoji } from '../styles/tokens';
+import { T, glass, PRIORITIES, projectColor, typeColor, stripEmoji } from '../styles/tokens';
 import { Badge, BugRow, TableHeader, Card, ProgressBar } from '../components/ui';
 
-export default function ProjectView({ bugs, meta, onSelect }) {
+export default function ListView({ bugs, meta, onSelect }) {
   const [selected, setSelected] = useState(null);
 
   const projectNames = meta.projects?.length > 0
@@ -15,7 +15,7 @@ export default function ProjectView({ bugs, meta, onSelect }) {
       open: pBugs.filter((b) => b.status !== 'Done').length,
       critical: pBugs.filter((b) => b.priority === 'Critical' && b.status !== 'Done').length,
       done: pBugs.filter((b) => b.status === 'Done').length,
-      color: projectColor(p),
+      color: meta.projects?.length > 0 ? projectColor(p) : typeColor(p),
     };
   }).filter((p) => p.total > 0);
 

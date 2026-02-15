@@ -8,7 +8,7 @@ import QuickCreate from './components/QuickCreate';
 import SummaryView from './views/SummaryView';
 import KanbanView from './views/KanbanView';
 import MemberView from './views/MemberView';
-import ProjectView from './views/ProjectView';
+import ListView from './views/ListView';
 import RoadmapView from './views/RoadmapView';
 import AdminView from './views/AdminView';
 
@@ -91,7 +91,7 @@ function LoginPage({ onLogin }) {
 export default function App() {
   const [view, setViewState] = useState(() => {
     const hash = window.location.hash.slice(1);
-    const valid = ['summary', 'kanban', 'member', 'project', 'roadmap', 'admin'];
+    const valid = ['summary', 'kanban', 'member', 'list', 'roadmap', 'admin'];
     return valid.includes(hash) ? hash : 'summary';
   });
   const setView = (v) => {
@@ -181,7 +181,7 @@ export default function App() {
       {view === 'summary' && <SummaryView bugs={bugs} meta={meta} onSelect={handleSelect} />}
       {view === 'kanban' && <KanbanView bugs={bugs} meta={meta} onSelect={handleSelect} />}
       {view === 'member' && <MemberView bugs={bugs} meta={meta} onSelect={handleSelect} />}
-      {view === 'project' && <ProjectView bugs={bugs} meta={meta} onSelect={handleSelect} />}
+      {view === 'list' && <ListView bugs={bugs} meta={meta} onSelect={handleSelect} />}
       {view === 'roadmap' && <RoadmapView bugs={bugs} meta={meta} onSelect={handleSelect} />}
       <div style={{
         padding: '14px 32px', borderTop: `1px solid ${T.border}`,

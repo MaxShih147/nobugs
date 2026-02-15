@@ -6,7 +6,7 @@ const VIEWS = [
   { id: 'summary', label: 'Summary' },
   { id: 'kanban', label: 'Kanban' },
   { id: 'member', label: 'Members' },
-  { id: 'project', label: 'Projects' },
+  { id: 'list', label: 'List' },
   { id: 'roadmap', label: 'Roadmap' },
 ];
 
