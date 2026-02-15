@@ -42,7 +42,7 @@ export default function RoadmapView({ bugs, meta, onSelect }) {
                     ...glass, borderRadius: T.radius,
                     padding: '10px 14px', cursor: 'pointer', maxWidth: 280,
                     transition: `all 0.3s ${T.ease}`,
-                    borderLeft: `3px solid ${priorityColor(bug.priority)}`,
+                    borderLeft: `3px solid ${typeColor(bug.type || '')}`,
                     opacity: bug.status === 'Done' ? 0.5 : 1,
                   }}
                   onMouseEnter={(e) => {
