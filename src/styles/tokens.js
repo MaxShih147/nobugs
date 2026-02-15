@@ -108,6 +108,13 @@ export const statusColor = (s) =>
 export const statusSoft = (s) =>
   ({ done: T.doneSoft, inProgress: T.inProgressSoft, inReview: T.inReviewSoft, open: T.openSoft }[matchStatus(s)] || 'transparent');
 
+const TYPE_COLORS = { bug: '#f47171', feature: '#8b7cf6', improve: '#5ec4ab' };
+
+export function typeColor(t) {
+  if (!t) return T.textDim;
+  return TYPE_COLORS[t.toLowerCase()] || T.textDim;
+}
+
 const PROJECT_PALETTE = ['#8b7cf6', '#5ec4ab', '#e09b6e', '#6aabde', '#dcc96e', '#c97ba5', '#5ec4bc', '#8894a0'];
 const projectColorCache = {};
 let colorIdx = 0;

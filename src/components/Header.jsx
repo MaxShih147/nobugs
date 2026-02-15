@@ -1,5 +1,5 @@
 import { Pill, Avatar } from './ui';
-import { T, glass, PRIORITIES, STATUSES } from '../styles/tokens';
+import { T, glass, PRIORITIES, STATUSES, priorityColor, statusColor } from '../styles/tokens';
 import { logout } from '../lib/api';
 
 const VIEWS = [
@@ -10,11 +10,13 @@ const VIEWS = [
   { id: 'roadmap', label: 'Roadmap' },
 ];
 
-function Select({ value, onChange, options, placeholder }) {
+function Select({ value, onChange, options, placeholder, colorFn }) {
+  const active = value && value !== 'All';
+  const color = active && colorFn ? colorFn(value) : undefined;
   return (
     <select value={value} onChange={(e) => onChange(e.target.value)} style={{
-      background: 'rgba(255, 255, 255, 0.04)', border: `1px solid ${T.border}`,
-      borderRadius: T.radiusSm, padding: '7px 12px', color: T.text,
+      background: 'rgba(255, 255, 255, 0.04)', border: `1px solid ${color ? `${color}40` : T.border}`,
+      borderRadius: T.radiusSm, padding: '7px 12px', color: color || T.text,
       fontSize: '12px', fontFamily: T.fontSans, outline: 'none', cursor: 'pointer',
       transition: `all 0.25s ${T.ease}`,
     }}>
@@ -79,8 +81,8 @@ export default function Header({ view, onViewChange, filters, meta, user }) {
             transition: `all 0.25s ${T.ease}`,
           }} />
         {meta.projects?.length > 0 && <Select value={filters.project} onChange={filters.setProject} options={meta.projects} placeholder="All Projects" />}
-        <Select value={filters.priority} onChange={filters.setPriority} options={meta.priorities?.length > 0 ? meta.priorities : PRIORITIES} placeholder="All Priorities" />
-        <Select value={filters.status} onChange={filters.setStatus} options={meta.statuses?.length > 0 ? meta.statuses : STATUSES} placeholder="All Statuses" />
+        <Select value={filters.priority} onChange={filters.setPriority} options={meta.priorities?.length > 0 ? meta.priorities : PRIORITIES} placeholder="All Priorities" colorFn={priorityColor} />
+        <Select value={filters.status} onChange={filters.setStatus} options={meta.statuses?.length > 0 ? meta.statuses : STATUSES} placeholder="All Statuses" colorFn={statusColor} />
         {user && <>
           <div style={{ height: 20, width: 1, background: T.border }} />
           <UserMenu user={user} />

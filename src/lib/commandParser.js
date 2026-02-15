@@ -19,10 +19,6 @@ const PRIORITY_NUM_MAP = {
   '4': 'P4', 'p4': 'P4', 'low': 'P4',
 };
 
-function stripEmoji(s) {
-  return s.replace(/[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{FE0F}]/gu, '').trim();
-}
-
 function fuzzyMatch(input, options) {
   if (!options || options.length === 0) return null;
   const lower = input.toLowerCase();
@@ -96,7 +92,7 @@ export function parseCommand(input, meta = {}) {
 
       if (cmd === 'type' && val) {
         const matched = fuzzyMatch(val, meta.types);
-        if (matched) { fields.type = stripEmoji(matched); i += 2; continue; }
+        if (matched) { fields.type = matched; i += 2; continue; }
         // Try common types
         const common = fuzzyMatch(val, ['Bug', 'Feature', 'Improve']);
         if (common) { fields.type = common; i += 2; continue; }
@@ -106,7 +102,7 @@ export function parseCommand(input, meta = {}) {
 
       if (cmd === 'scope' && val) {
         const matched = fuzzyMatch(val, meta.scopes);
-        if (matched) { fields.scope = stripEmoji(matched); i += 2; continue; }
+        if (matched) { fields.scope = matched; i += 2; continue; }
         const common = fuzzyMatch(val, ['Epic', 'Story', 'Task']);
         if (common) { fields.scope = common; i += 2; continue; }
         warnings.push(`Unknown scope: ${val}`);
@@ -118,11 +114,11 @@ export function parseCommand(input, meta = {}) {
         if (prefix && meta.priorities?.length > 0) {
           // Find the meta priority that starts with the P-number prefix
           const match = meta.priorities.find((p) => p.toUpperCase().startsWith(prefix));
-          if (match) { fields.priority = stripEmoji(match); i += 2; continue; }
+          if (match) { fields.priority = match; i += 2; continue; }
         }
         // Fallback: fuzzy match directly against meta priorities
         const metaMatch = fuzzyMatch(val, meta.priorities);
-        if (metaMatch) { fields.priority = stripEmoji(metaMatch); i += 2; continue; }
+        if (metaMatch) { fields.priority = metaMatch; i += 2; continue; }
         warnings.push(`Unknown priority: ${val}`);
         i += 2; continue;
       }

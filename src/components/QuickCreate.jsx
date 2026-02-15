@@ -1,6 +1,15 @@
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
-import { T, glass, priorityColor, statusColor, stripEmoji } from '../styles/tokens';
+import { T, glass, priorityColor, statusColor, typeColor } from '../styles/tokens';
 import { parseCommand } from '../lib/commandParser';
+
+const BASE_STATUSES = ['To do', 'Pending', 'In progress', 'Reviewing', 'Done', "Can't reproduce"];
+const BASE_PRIORITIES = ['P1', 'P2', 'P3', 'P4'];
+
+function mergeOptions(base, meta) {
+  const seen = new Set(base.map((b) => b.toLowerCase()));
+  const extra = (meta || []).filter((o) => o && !seen.has(o.toLowerCase()));
+  return [...base, ...extra];
+}
 
 const fieldStyle = {
   width: '100%', padding: '10px 14px',
@@ -31,7 +40,7 @@ const labelStyle = {
   marginBottom: 6, display: 'block',
 };
 
-function SelectField({ label, value, onChange, options, placeholder, colorFn, cleanEmoji }) {
+function SelectField({ label, value, onChange, options, placeholder, colorFn }) {
   const color = colorFn && value ? colorFn(value) : undefined;
   return (
     <div>
@@ -39,10 +48,7 @@ function SelectField({ label, value, onChange, options, placeholder, colorFn, cl
       <select value={value} onChange={(e) => onChange(e.target.value)}
         style={{ ...selectStyle, ...(color ? { color, borderColor: `${color}40` } : {}) }}>
         <option value="">{placeholder || `Select...`}</option>
-        {options.map((o) => {
-          const clean = cleanEmoji ? stripEmoji(o) : o;
-          return <option key={o} value={clean}>{clean}</option>;
-        })}
+        {options.map((o) => <option key={o} value={o}>{o}</option>)}
       </select>
     </div>
   );
@@ -210,6 +216,8 @@ export default function QuickCreate({ meta, createBug }) {
     setError(null);
     try {
       const data = { title, ...mergedFields };
+      if (!data.priority) data.priority = 'P1';
+      if (!data.status) data.status = 'To do';
       // Combine description sections
       const desc = buildDescription(descSections);
       if (desc) data.description = desc;
@@ -313,7 +321,9 @@ export default function QuickCreate({ meta, createBug }) {
             padding: '6px 0 2px 18px',
           }}>
             {mergedFields.type && (
-              <Chip label="type" value={mergedFields.type} color={T.accent} bg={T.accentSoft} />
+              <Chip label="type" value={mergedFields.type}
+                color={typeColor(mergedFields.type)}
+                bg={`${typeColor(mergedFields.type)}18`} />
             )}
             {mergedFields.priority && (
               <Chip label="pri" value={mergedFields.priority}
@@ -361,25 +371,22 @@ export default function QuickCreate({ meta, createBug }) {
             borderTop: `1px solid ${T.border}`, marginTop: 8,
           }}>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
-              {hasStatuses && (
-                <SelectField label="Status" value={mergedFields.status || ''}
-                  onChange={(v) => handleFormChange('status', v)} options={meta.statuses}
-                  colorFn={statusColor} />
-              )}
-              {hasPriorities && (
-                <SelectField label="Priority" value={mergedFields.priority || ''}
-                  onChange={(v) => handleFormChange('priority', v)} options={meta.priorities}
-                  colorFn={priorityColor} cleanEmoji />
-              )}
+              <SelectField label="Status" value={mergedFields.status || 'To do'}
+                onChange={(v) => handleFormChange('status', v)}
+                options={mergeOptions(BASE_STATUSES, meta.statuses)}
+                colorFn={statusColor} />
+              <SelectField label="Priority" value={mergedFields.priority || 'P1'}
+                onChange={(v) => handleFormChange('priority', v)}
+                options={mergeOptions(BASE_PRIORITIES, meta.priorities)}
+                colorFn={priorityColor} />
               {hasTypes && (
                 <SelectField label="Type" value={mergedFields.type || ''}
                   onChange={(v) => handleFormChange('type', v)} options={meta.types}
-                  cleanEmoji />
+                  colorFn={typeColor} />
               )}
               {hasScopes && (
                 <SelectField label="Scope" value={mergedFields.scope || ''}
-                  onChange={(v) => handleFormChange('scope', v)} options={meta.scopes}
-                  cleanEmoji />
+                  onChange={(v) => handleFormChange('scope', v)} options={meta.scopes} />
               )}
               {hasSizes && (
                 <SelectField label="Size" value={mergedFields.size || ''}
