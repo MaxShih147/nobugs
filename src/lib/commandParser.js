@@ -96,7 +96,7 @@ export function parseCommand(input, meta = {}) {
 
       if (cmd === 'type' && val) {
         const matched = fuzzyMatch(val, meta.types);
-        if (matched) { fields.type = matched; i += 2; continue; }
+        if (matched) { fields.type = stripEmoji(matched); i += 2; continue; }
         // Try common types
         const common = fuzzyMatch(val, ['Bug', 'Feature', 'Improve']);
         if (common) { fields.type = common; i += 2; continue; }
