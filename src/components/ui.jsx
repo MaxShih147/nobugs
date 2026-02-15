@@ -1,4 +1,4 @@
-import { T, glass, priorityColor, prioritySoft, priorityDots, stripEmoji, statusColor, statusSoft, projectColor, typeColor } from '../styles/tokens';
+import { T, glass, priorityColor, prioritySoft, priorityDots, stripEmoji, statusColor, statusSoft, projectColor, typeColor, formatDate } from '../styles/tokens';
 
 export function Badge({ children, color, bg, style = {} }) {
   return (
@@ -98,7 +98,7 @@ export function BugRow({ bug, onClick }) {
       <StatusBadge status={bug.status} />
       <span style={{ fontSize: '12px', color: T.textDim, fontFamily: T.fontSans }}>{bug.assignee.split(' ')[0]}</span>
       <span style={{ fontSize: '12px', color: bug.project ? projectColor(bug.project) : typeColor(bug.type || ''), fontFamily: T.fontSans }}>{stripEmoji(bug.project || bug.type || '')}</span>
-      <span style={{ fontSize: '11px', color: T.textDim, fontFamily: T.font }}>{bug.due || '\u2014'}</span>
+      <span style={{ fontSize: '11px', color: T.textDim, fontFamily: T.font }}>{formatDate(bug.due) || '\u2014'}</span>
     </div>
   );
 }

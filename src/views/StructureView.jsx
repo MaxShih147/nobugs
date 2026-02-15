@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { T, glass, typeColor, scopeColor, statusColor, priorityColor } from '../styles/tokens';
+import { T, glass, typeColor, scopeColor, statusColor, priorityColor, formatDate } from '../styles/tokens';
 import { Badge, Card } from '../components/ui';
 import { buildTree, flattenTree, validateDrop, getAncestors } from '../lib/hierarchy';
 
@@ -333,7 +333,7 @@ function DetailPanel({ node, tree, allBugs, onJumpTo, onChangeParent, onUnlink }
         <InfoRow label="Assignee" value={node.assignee} />
         <InfoRow label="Project" value={node.project} />
         <InfoRow label="Sprint" value={node.sprint} />
-        <InfoRow label="Due" value={node.due || '\u2014'} />
+        <InfoRow label="Due" value={formatDate(node.due) || '\u2014'} />
         <InfoRow label="Children" value={`${node.childCountDirect} direct / ${node.childCountTotal} total`} />
       </div>
 

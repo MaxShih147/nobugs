@@ -1,12 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
-import { T, glass, typeColor, scopeColor, stripEmoji } from '../styles/tokens';
+import { T, glass, typeColor, scopeColor, stripEmoji, formatDate } from '../styles/tokens';
 import { PriorityBadge, StatusBadge } from './ui';
 import { fetchBug, updateDescription } from '../lib/api';
-
-function formatDate(d) {
-  if (!d) return null;
-  return d.replace(/-/g, '/');
-}
 
 function EditableDate({ value, onSave }) {
   const [editing, setEditing] = useState(false);
@@ -48,20 +43,22 @@ function EditableDate({ value, onSave }) {
     textAlign: 'center', boxSizing: 'border-box',
   };
 
+  const numOnly = (v) => v.replace(/\D/g, '');
+
   if (editing) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}
         onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) save(); }}
       >
-        <input ref={yRef} autoFocus value={yyyy} placeholder="YYYY" maxLength={4}
+        <input ref={yRef} autoFocus value={yyyy} placeholder="YYYY" maxLength={4} inputMode="numeric"
           style={{ ...segStyle, width: 52 }}
-          onChange={(e) => { setYyyy(e.target.value); if (e.target.value.length === 4) mRef.current?.focus(); }}
+          onChange={(e) => { const v = numOnly(e.target.value); setYyyy(v); if (v.length === 4) mRef.current?.focus(); }}
           onKeyDown={(e) => { if (e.key === 'Enter') save(); if (e.key === 'Escape') setEditing(false); }}
         />
         <span style={{ color: T.textDim }}>/</span>
-        <input ref={mRef} value={mm} placeholder="MM" maxLength={2}
+        <input ref={mRef} value={mm} placeholder="MM" maxLength={2} inputMode="numeric"
           style={{ ...segStyle, width: 36 }}
-          onChange={(e) => { setMm(e.target.value); if (e.target.value.length === 2) dRef.current?.focus(); }}
+          onChange={(e) => { const v = numOnly(e.target.value); setMm(v); if (v.length === 2) dRef.current?.focus(); }}
           onKeyDown={(e) => {
             if (e.key === 'Enter') save();
             if (e.key === 'Escape') setEditing(false);
@@ -69,9 +66,9 @@ function EditableDate({ value, onSave }) {
           }}
         />
         <span style={{ color: T.textDim }}>/</span>
-        <input ref={dRef} value={dd} placeholder="DD" maxLength={2}
+        <input ref={dRef} value={dd} placeholder="DD" maxLength={2} inputMode="numeric"
           style={{ ...segStyle, width: 36 }}
-          onChange={(e) => setDd(e.target.value)}
+          onChange={(e) => { const v = numOnly(e.target.value); setDd(v); }}
           onKeyDown={(e) => {
             if (e.key === 'Enter') save();
             if (e.key === 'Escape') setEditing(false);

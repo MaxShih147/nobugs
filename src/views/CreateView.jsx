@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { T, glass } from '../styles/tokens';
 import { Card } from '../components/ui';
 
@@ -33,6 +33,56 @@ function SelectField({ label, value, onChange, options, placeholder }) {
         {options.map((o) => <option key={o} value={o}>{o}</option>)}
       </select>
     </Field>
+  );
+}
+
+function DateInput({ value, onChange }) {
+  const parts = (value || '').split('-');
+  const [yyyy, setYyyy] = useState(parts[0] || '');
+  const [mm, setMm] = useState(parts[1] || '');
+  const [dd, setDd] = useState(parts[2] || '');
+  const yRef = useRef(null);
+  const mRef = useRef(null);
+  const dRef = useRef(null);
+
+  const emit = (y, m, d) => {
+    if (y && m && d) {
+      const iso = `${y.padStart(4, '0')}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+      const parsed = new Date(iso);
+      if (!isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === iso) {
+        onChange(iso);
+      }
+    } else if (!y && !m && !d) {
+      onChange('');
+    }
+  };
+
+  const segStyle = {
+    ...fieldStyle,
+    width: 'auto', textAlign: 'center', padding: '12px 8px',
+  };
+
+  const numOnly = (v) => v.replace(/\D/g, '');
+
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+      <input ref={yRef} value={yyyy} placeholder="YYYY" maxLength={4} inputMode="numeric"
+        style={{ ...segStyle, flex: '0 0 60px' }}
+        onChange={(e) => { const v = numOnly(e.target.value); setYyyy(v); emit(v, mm, dd); if (v.length === 4) mRef.current?.focus(); }}
+      />
+      <span style={{ color: T.textDim, fontSize: '14px' }}>/</span>
+      <input ref={mRef} value={mm} placeholder="MM" maxLength={2} inputMode="numeric"
+        style={{ ...segStyle, flex: '0 0 44px' }}
+        onChange={(e) => { const v = numOnly(e.target.value); setMm(v); emit(yyyy, v, dd); if (v.length === 2) dRef.current?.focus(); }}
+        onKeyDown={(e) => { if (e.key === 'Backspace' && !mm) yRef.current?.focus(); }}
+      />
+      <span style={{ color: T.textDim, fontSize: '14px' }}>/</span>
+      <input ref={dRef} value={dd} placeholder="DD" maxLength={2} inputMode="numeric"
+        style={{ ...segStyle, flex: '0 0 44px' }}
+        onChange={(e) => { const v = numOnly(e.target.value); setDd(v); emit(yyyy, mm, v); }}
+        onKeyDown={(e) => { if (e.key === 'Backspace' && !dd) mRef.current?.focus(); }}
+      />
+    </div>
   );
 }
 
@@ -111,7 +161,7 @@ export default function CreateView({ meta, onCreate, onCancel }) {
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
             <Field label="Due Date">
-              <input type="date" value={form.due} onChange={(e) => set('due')(e.target.value)} style={fieldStyle} />
+              <DateInput value={form.due} onChange={set('due')} />
             </Field>
             <Field label="Points">
               <input type="number" min="0" value={form.points} onChange={(e) => set('points')(e.target.value)}

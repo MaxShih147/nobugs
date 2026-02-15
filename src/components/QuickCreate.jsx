@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
-import { T, glass, priorityColor, statusColor, typeColor, scopeColor } from '../styles/tokens';
+import { T, glass, priorityColor, statusColor, typeColor, scopeColor, formatDate } from '../styles/tokens';
 import { parseCommand } from '../lib/commandParser';
 
 const BASE_STATUSES = ['To do', 'Pending', 'In progress', 'Reviewing', 'Done', "Can't reproduce"];
@@ -50,6 +50,64 @@ function SelectField({ label, value, onChange, options, placeholder, colorFn }) 
         <option value="">{placeholder || `Select...`}</option>
         {options.map((o) => <option key={o} value={o}>{o}</option>)}
       </select>
+    </div>
+  );
+}
+
+function DateInput({ value, onChange }) {
+  const parts = (value || '').split('-');
+  const [yyyy, setYyyy] = useState(parts[0] || '');
+  const [mm, setMm] = useState(parts[1] || '');
+  const [dd, setDd] = useState(parts[2] || '');
+  const yRef = useRef(null);
+  const mRef = useRef(null);
+  const dRef = useRef(null);
+
+  useEffect(() => {
+    const p = (value || '').split('-');
+    setYyyy(p[0] || ''); setMm(p[1] || ''); setDd(p[2] || '');
+  }, [value]);
+
+  const emit = (y, m, d) => {
+    if (y && m && d) {
+      const iso = `${y.padStart(4, '0')}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+      const parsed = new Date(iso);
+      if (!isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === iso) {
+        onChange(iso);
+      }
+    } else if (!y && !m && !d) {
+      onChange('');
+    }
+  };
+
+  const segStyle = {
+    background: 'rgba(255, 255, 255, 0.03)',
+    border: `1px solid ${T.border}`, borderRadius: T.radiusSm,
+    color: T.text, fontSize: '12px', fontFamily: T.fontSans, outline: 'none',
+    boxSizing: 'border-box', textAlign: 'center', padding: '10px 0',
+    minWidth: 0, width: 0,
+  };
+
+  const numOnly = (v) => v.replace(/\D/g, '');
+
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 2, width: '100%', minWidth: 0 }}>
+      <input ref={yRef} value={yyyy} placeholder="YYYY" maxLength={4} inputMode="numeric"
+        style={{ ...segStyle, flex: '1 1 0' }}
+        onChange={(e) => { const v = numOnly(e.target.value); setYyyy(v); emit(v, mm, dd); if (v.length === 4) mRef.current?.focus(); }}
+      />
+      <span style={{ color: T.textDim, fontSize: '11px', flexShrink: 0 }}>/</span>
+      <input ref={mRef} value={mm} placeholder="MM" maxLength={2} inputMode="numeric"
+        style={{ ...segStyle, flex: '1 1 0' }}
+        onChange={(e) => { const v = numOnly(e.target.value); setMm(v); emit(yyyy, v, dd); if (v.length === 2) dRef.current?.focus(); }}
+        onKeyDown={(e) => { if (e.key === 'Backspace' && !mm) yRef.current?.focus(); }}
+      />
+      <span style={{ color: T.textDim, fontSize: '11px', flexShrink: 0 }}>/</span>
+      <input ref={dRef} value={dd} placeholder="DD" maxLength={2} inputMode="numeric"
+        style={{ ...segStyle, flex: '1 1 0' }}
+        onChange={(e) => { const v = numOnly(e.target.value); setDd(v); emit(yyyy, mm, v); }}
+        onKeyDown={(e) => { if (e.key === 'Backspace' && !dd) mRef.current?.focus(); }}
+      />
     </div>
   );
 }
@@ -339,7 +397,7 @@ export default function QuickCreate({ meta, createBug }) {
                 color={scopeColor(mergedFields.scope)}
                 bg={`${scopeColor(mergedFields.scope)}18`} />}
             {mergedFields.assignee && <Chip label="who" value={mergedFields.assignee} />}
-            {mergedFields.due && <Chip label="due" value={mergedFields.due} />}
+            {mergedFields.due && <Chip label="due" value={formatDate(mergedFields.due) || mergedFields.due} />}
             {mergedFields.sprint && <Chip label="sprint" value={mergedFields.sprint} />}
             {mergedFields.points !== undefined && <Chip label="pts" value={String(mergedFields.points)} />}
             {mergedFields.size && <Chip label="size" value={mergedFields.size} />}
@@ -409,10 +467,9 @@ export default function QuickCreate({ meta, createBug }) {
               )}
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginTop: 10 }}>
-              <div>
+              <div style={{ minWidth: 0, overflow: 'hidden' }}>
                 <label style={labelStyle}>Due Date</label>
-                <input type="date" value={mergedFields.due || ''}
-                  onChange={(e) => handleFormChange('due', e.target.value)} style={fieldStyle} />
+                <DateInput value={mergedFields.due || ''} onChange={(v) => handleFormChange('due', v)} />
               </div>
               <div>
                 <label style={labelStyle}>Points</label>

@@ -121,6 +121,11 @@ export function scopeColor(s) {
   return SCOPE_COLORS[s.toLowerCase()] || T.textDim;
 }
 
+export function formatDate(d) {
+  if (!d) return null;
+  return d.replace(/-/g, '/');
+}
+
 const PROJECT_PALETTE = ['#8b7cf6', '#5ec4ab', '#e09b6e', '#6aabde', '#dcc96e', '#c97ba5', '#5ec4bc', '#8894a0'];
 const projectColorCache = {};
 let colorIdx = 0;
