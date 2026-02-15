@@ -16,6 +16,7 @@ const PROP_MAP = {
   scope: 'Scope',         // select: Epic, Story, Task
   size: 'Size',           // select: XL, L, M, S
   points: 'Points',       // number
+  parent: 'Parent item',  // relation (single, enforced as 0 or 1)
 };
 
 // ─── Property extractors ────────────────────────────────────────────────────
@@ -58,6 +59,11 @@ function extractNumber(prop) {
   return prop.number;
 }
 
+function extractRelation(prop) {
+  if (!prop || prop.type !== 'relation' || !prop.relation?.length) return null;
+  return prop.relation[0].id;
+}
+
 // ─── Notion page → nobugs bug object ───────────────────────────────────────
 
 function mapPageToBug(page) {
@@ -76,6 +82,7 @@ function mapPageToBug(page) {
     sprint: extractFirstMultiSelect(p[PROP_MAP.sprint]) || '',
     due: extractDate(p[PROP_MAP.due]),
     created: page.created_time.slice(0, 10),
+    parentNotionId: extractRelation(p[PROP_MAP.parent]),
   };
 }
 
@@ -125,6 +132,11 @@ export async function updateBugInNotion(pageId, updates) {
   if (updates.points !== undefined) properties[PROP_MAP.points] = { number: updates.points };
   if (updates.due !== undefined) {
     properties[PROP_MAP.due] = updates.due ? { date: { start: updates.due } } : { date: null };
+  }
+  if (updates.parentNotionId !== undefined) {
+    properties[PROP_MAP.parent] = updates.parentNotionId
+      ? { relation: [{ id: updates.parentNotionId }] }
+      : { relation: [] };
   }
   const page = await notion.pages.update({ page_id: pageId, properties });
   return mapPageToBug(page);

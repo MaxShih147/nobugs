@@ -10,6 +10,7 @@ import KanbanView from './views/KanbanView';
 import MemberView from './views/MemberView';
 import ListView from './views/ListView';
 import RoadmapView from './views/RoadmapView';
+import UnlinkedView from './views/UnlinkedView';
 import AdminView from './views/AdminView';
 
 function LoginPage({ onLogin }) {
@@ -91,7 +92,7 @@ function LoginPage({ onLogin }) {
 export default function App() {
   const [view, setViewState] = useState(() => {
     const hash = window.location.hash.slice(1);
-    const valid = ['summary', 'kanban', 'member', 'list', 'roadmap', 'admin'];
+    const valid = ['summary', 'kanban', 'member', 'list', 'roadmap', 'unlinked', 'admin'];
     return valid.includes(hash) ? hash : 'summary';
   });
   const setView = (v) => {
@@ -100,7 +101,8 @@ export default function App() {
   };
   const [detailBug, setDetailBug] = useState(null);
   const [authState, setAuthState] = useState({ loading: true, authEnabled: false, authenticated: false, user: null });
-  const { bugs, allBugs, meta, loading, error, filters, createBug, reload } = useBugs();
+  const { bugs, allBugs, meta, loading, error, filters, updateBug, createBug, reload } = useBugs();
+  const unlinkedCount = allBugs.filter((b) => !b.parentNotionId).length;
 
   const handleSelect = (bug) => setDetailBug(bug);
 
@@ -175,7 +177,7 @@ export default function App() {
 
   return (
     <div style={{ minHeight: '100vh', background: T.bg }}>
-      <Header view={view} onViewChange={setView} filters={filters} meta={meta} user={authState.user} />
+      <Header view={view} onViewChange={setView} filters={filters} meta={meta} user={authState.user} unlinkedCount={unlinkedCount} />
       <QuickCreate meta={meta} createBug={createBug} />
       {view === 'admin' && authState.user?.isAdmin && <AdminView user={authState.user} />}
       {view === 'summary' && <SummaryView bugs={bugs} allBugs={allBugs} meta={meta} onSelect={handleSelect} />}
@@ -183,6 +185,7 @@ export default function App() {
       {view === 'member' && <MemberView bugs={bugs} meta={meta} onSelect={handleSelect} />}
       {view === 'list' && <ListView bugs={bugs} meta={meta} onSelect={handleSelect} />}
       {view === 'roadmap' && <RoadmapView bugs={bugs} meta={meta} onSelect={handleSelect} />}
+      {view === 'unlinked' && <UnlinkedView bugs={bugs} allBugs={allBugs} meta={meta} onSelect={handleSelect} updateBug={updateBug} />}
       <div style={{
         padding: '14px 32px', borderTop: `1px solid ${T.border}`,
         fontSize: '11px', color: T.textDim, fontFamily: T.fontSans,

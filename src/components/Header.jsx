@@ -8,6 +8,7 @@ const VIEWS = [
   { id: 'member', label: 'Members' },
   { id: 'list', label: 'List' },
   { id: 'roadmap', label: 'Roadmap' },
+  { id: 'unlinked', label: 'Unlinked' },
 ];
 
 function Select({ value, onChange, options, placeholder, colorFn }) {
@@ -45,7 +46,7 @@ function UserMenu({ user }) {
   );
 }
 
-export default function Header({ view, onViewChange, filters, meta, user }) {
+export default function Header({ view, onViewChange, filters, meta, user, unlinkedCount }) {
   const views = user?.isAdmin
     ? [...VIEWS, { id: 'admin', label: 'Admin' }]
     : VIEWS;
@@ -67,7 +68,9 @@ export default function Header({ view, onViewChange, filters, meta, user }) {
         <div style={{ height: 20, width: 1, background: T.border }} />
         <div style={{ display: 'flex', gap: 4 }}>
           {views.map((v) => (
-            <Pill key={v.id} active={view === v.id} onClick={() => onViewChange(v.id)}>{v.label}</Pill>
+            <Pill key={v.id} active={view === v.id} onClick={() => onViewChange(v.id)}>
+              {v.id === 'unlinked' && unlinkedCount != null ? `${v.label} (${unlinkedCount})` : v.label}
+            </Pill>
           ))}
         </div>
       </div>

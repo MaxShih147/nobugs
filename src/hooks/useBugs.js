@@ -47,7 +47,7 @@ export function useBugs() {
   const handleUpdate = useCallback(async (id, updates) => {
     try {
       const updated = await updateBug(id, updates);
-      setBugs((prev) => prev.map((b) => (b.id === id ? updated : b)));
+      setBugs((prev) => prev.map((b) => (b.id === id || b.notionId === id ? updated : b)));
       return updated;
     } catch (err) { setError(err.message); throw err; }
   }, []);

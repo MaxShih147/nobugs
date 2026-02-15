@@ -74,12 +74,20 @@ function seededRandom(seed) {
   };
 }
 
+function assignScope(type, rand) {
+  const t = type.toLowerCase();
+  if (t === 'bug') return 'task';
+  if (t === 'feature') return rand() < 0.3 ? 'epic' : 'story';
+  return rand() < 0.5 ? 'story' : 'task';
+}
+
 export function generateMockBugs() {
   const rand = seededRandom(42);
-  return TITLES.map((title, i) => {
+  const bugs = TITLES.map((title, i) => {
     const status = STATUSES[Math.floor(rand() * STATUSES.length)];
     const dueBase = new Date(2025, 1, 1 + Math.floor(rand() * 60));
     const createdBase = new Date(2025, 0, 10 + Math.floor(rand() * 30));
+    const type = TYPES[Math.floor(rand() * TYPES.length)];
 
     return {
       id: `NB-${String(i + 1).padStart(3, '0')}`,
@@ -92,10 +100,13 @@ export function generateMockBugs() {
         MOCK_TAGS[Math.floor(rand() * MOCK_TAGS.length)],
         MOCK_TAGS[Math.floor(rand() * MOCK_TAGS.length)],
       ].filter((v, j, a) => a.indexOf(v) === j),
-      type: TYPES[Math.floor(rand() * TYPES.length)],
+      type,
+      scope: assignScope(type, rand),
       sprint: MOCK_SPRINTS[Math.floor(rand() * MOCK_SPRINTS.length)],
       created: createdBase.toISOString().slice(0, 10),
       due: status === 'Done' ? null : dueBase.toISOString().slice(0, 10),
+      parentNotionId: null,
+      parentTitle: null,
       description: [
         'Steps to reproduce:',
         '1. Navigate to the relevant feature',
@@ -109,4 +120,18 @@ export function generateMockBugs() {
       ].join('\n'),
     };
   });
+
+  // Second pass: link ~60% of non-epic bugs to a parent (epic or story)
+  const parents = bugs.filter((b) => b.scope === 'epic' || b.scope === 'story');
+  const linkRand = seededRandom(99);
+  for (const bug of bugs) {
+    if (bug.scope === 'epic' || parents.length === 0) continue;
+    if (linkRand() < 0.6) {
+      const parent = parents[Math.floor(linkRand() * parents.length)];
+      bug.parentNotionId = parent.id;
+      bug.parentTitle = parent.title;
+    }
+  }
+
+  return bugs;
 }
