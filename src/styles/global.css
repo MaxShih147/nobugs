@@ -86,3 +86,72 @@ input[type="number"] { -moz-appearance: textfield; }
   background: rgba(139, 124, 246, 0.3);
   color: #fff;
 }
+
+/* Markdown rendered content */
+.md-rendered {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--text);
+  word-wrap: break-word;
+}
+.md-rendered h1 { font-size: 1.6em; font-weight: 700; margin: 1.2em 0 0.5em; }
+.md-rendered h2 { font-size: 1.3em; font-weight: 600; margin: 1em 0 0.4em; }
+.md-rendered h3 { font-size: 1.1em; font-weight: 600; margin: 0.8em 0 0.3em; }
+.md-rendered h1:first-child,
+.md-rendered h2:first-child,
+.md-rendered h3:first-child { margin-top: 0; }
+.md-rendered p { margin: 0 0 0.8em; }
+.md-rendered p:last-child { margin-bottom: 0; }
+.md-rendered ul, .md-rendered ol { padding-left: 1.8em; margin: 0 0 0.8em; }
+.md-rendered li { margin: 0.25em 0; }
+.md-rendered li input[type="checkbox"] { accent-color: var(--accent); margin-right: 6px; }
+.md-rendered blockquote {
+  border-left: 3px solid var(--accent);
+  padding: 8px 14px;
+  margin: 0.6em 0;
+  background: var(--accent-soft);
+  color: var(--text-dim);
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+.md-rendered blockquote p:last-child { margin-bottom: 0; }
+.md-rendered code {
+  font-family: var(--font-mono);
+  font-size: 0.88em;
+  background: rgba(139, 124, 246, 0.1);
+  color: var(--accent);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+.md-rendered pre {
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  margin: 0.6em 0;
+  overflow-x: auto;
+}
+.md-rendered pre code {
+  background: none;
+  color: var(--text);
+  padding: 0;
+  border-radius: 0;
+  font-size: 0.85em;
+}
+.md-rendered hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 1.2em 0;
+}
+.md-rendered a { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
+.md-rendered a:hover { opacity: 0.8; }
+.md-rendered strong { font-weight: 600; }
+.md-rendered img { max-width: 100%; border-radius: var(--radius); }
+.md-rendered table { border-collapse: collapse; width: 100%; margin: 0.6em 0; }
+.md-rendered th, .md-rendered td {
+  border: 1px solid var(--border);
+  padding: 8px 12px;
+  text-align: left;
+  font-size: 13px;
+}
+.md-rendered th { background: var(--bg-subtle); font-weight: 600; }

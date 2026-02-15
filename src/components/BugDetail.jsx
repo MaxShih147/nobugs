@@ -1,7 +1,160 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
+import { marked } from 'marked';
+import DOMPurify from 'dompurify';
 import { T, glass, typeColor, scopeColor, stripEmoji, formatDate } from '../styles/tokens';
 import { PriorityBadge, StatusBadge } from './ui';
 import { fetchBug, updateDescription } from '../lib/api';
+
+marked.setOptions({ gfm: true, breaks: true });
+
+function MarkdownRenderer({ content }) {
+  const html = useMemo(
+    () => DOMPurify.sanitize(marked.parse(content || '')),
+    [content]
+  );
+  return <div className="md-rendered" dangerouslySetInnerHTML={{ __html: html }} />;
+}
+
+function insertMarkdown(textareaRef, value, onChange, before, after, placeholder) {
+  const ta = textareaRef.current;
+  if (!ta) return;
+  const start = ta.selectionStart;
+  const end = ta.selectionEnd;
+  const selected = value.slice(start, end);
+  const insert = selected || placeholder;
+  const newValue = value.slice(0, start) + before + insert + after + value.slice(end);
+  onChange(newValue);
+  requestAnimationFrame(() => {
+    ta.focus();
+    const cursorStart = start + before.length;
+    const cursorEnd = cursorStart + insert.length;
+    ta.setSelectionRange(cursorStart, cursorEnd);
+  });
+}
+
+function handleListContinue(e, textareaRef, value, onChange) {
+  if (e.key !== 'Enter') return;
+  const ta = textareaRef.current;
+  if (!ta) return;
+  const pos = ta.selectionStart;
+  const before = value.slice(0, pos);
+  const lineStart = before.lastIndexOf('\n') + 1;
+  const line = before.slice(lineStart);
+
+  let match;
+  if ((match = line.match(/^(\s*- \[[ x]\] )(.*)$/))) {
+    // Checklist
+    if (!match[2]) { // empty item — clear prefix
+      e.preventDefault();
+      const newValue = value.slice(0, lineStart) + value.slice(pos);
+      onChange(newValue);
+      requestAnimationFrame(() => { ta.focus(); ta.setSelectionRange(lineStart, lineStart); });
+    } else {
+      e.preventDefault();
+      const prefix = match[1].replace(/\[x\]/, '[ ]');
+      const insert = '\n' + prefix;
+      const newValue = value.slice(0, pos) + insert + value.slice(pos);
+      onChange(newValue);
+      const cur = pos + insert.length;
+      requestAnimationFrame(() => { ta.focus(); ta.setSelectionRange(cur, cur); });
+    }
+  } else if ((match = line.match(/^(\s*- )(.*)$/))) {
+    // Bullet
+    if (!match[2]) {
+      e.preventDefault();
+      const newValue = value.slice(0, lineStart) + value.slice(pos);
+      onChange(newValue);
+      requestAnimationFrame(() => { ta.focus(); ta.setSelectionRange(lineStart, lineStart); });
+    } else {
+      e.preventDefault();
+      const insert = '\n' + match[1];
+      const newValue = value.slice(0, pos) + insert + value.slice(pos);
+      onChange(newValue);
+      const cur = pos + insert.length;
+      requestAnimationFrame(() => { ta.focus(); ta.setSelectionRange(cur, cur); });
+    }
+  } else if ((match = line.match(/^(\s*)(\d+)\. (.*)$/))) {
+    // Numbered
+    if (!match[3]) {
+      e.preventDefault();
+      const newValue = value.slice(0, lineStart) + value.slice(pos);
+      onChange(newValue);
+      requestAnimationFrame(() => { ta.focus(); ta.setSelectionRange(lineStart, lineStart); });
+    } else {
+      e.preventDefault();
+      const next = Number(match[2]) + 1;
+      const insert = '\n' + match[1] + next + '. ';
+      const newValue = value.slice(0, pos) + insert + value.slice(pos);
+      onChange(newValue);
+      const cur = pos + insert.length;
+      requestAnimationFrame(() => { ta.focus(); ta.setSelectionRange(cur, cur); });
+    }
+  }
+}
+
+function MarkdownToolbar({ textareaRef, value, onChange }) {
+  const ic = (children) => (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'block' }}>
+      {children}
+    </svg>
+  );
+  const btnStyle = {
+    background: 'none', border: `1px solid ${T.border}`, color: T.textDim,
+    borderRadius: T.radiusSm, width: 28, height: 26, padding: 0,
+    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+    cursor: 'pointer', transition: `all 0.15s ${T.ease}`,
+  };
+  const btn = (icon, title, before, after, placeholder) => (
+    <button key={title} title={title}
+      onMouseDown={(e) => e.preventDefault()}
+      onClick={() => insertMarkdown(textareaRef, value, onChange, before, after, placeholder)}
+      style={btnStyle}
+    >{icon}</button>
+  );
+  return (
+    <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+      {btn(ic(<path d="M7 5h6.5a3.5 3.5 0 0 1 0 7H7zm0 7h7.5a3.5 3.5 0 0 1 0 7H7z" />), 'Bold', '**', '**', 'bold')}
+      {btn(ic(<path d="M19 4h-9M14 20H5M15 4L9 20" />), 'Italic', '_', '_', 'italic')}
+      {btn(ic(<path d="M6 4v16M18 4v16M6 12h12" />), 'Heading', '## ', '', 'heading')}
+      {btn(ic(
+        <>
+          <path d="M9 6h12M9 12h12M9 18h12" />
+          <circle cx="4" cy="6" r="1.5" fill="currentColor" stroke="none" />
+          <circle cx="4" cy="12" r="1.5" fill="currentColor" stroke="none" />
+          <circle cx="4" cy="18" r="1.5" fill="currentColor" stroke="none" />
+        </>
+      ), 'Bullet list', '- ', '', 'item')}
+      {btn(ic(
+        <>
+          <path d="M11 6h10M11 12h10M11 18h10" />
+          <text x="1" y="9" fill="currentColor" stroke="none" fontSize="10" fontWeight="700" fontFamily="sans-serif">1</text>
+          <text x="1" y="15" fill="currentColor" stroke="none" fontSize="10" fontWeight="700" fontFamily="sans-serif">2</text>
+          <text x="1" y="21" fill="currentColor" stroke="none" fontSize="10" fontWeight="700" fontFamily="sans-serif">3</text>
+        </>
+      ), 'Numbered list', '1. ', '', 'item')}
+      {btn(ic(
+        <>
+          <rect x="3" y="3" width="18" height="18" rx="2" />
+          <path d="M9 12l2 2 4-4" />
+        </>
+      ), 'Checklist', '- [ ] ', '', 'task')}
+      {btn(ic(<path d="M16 18l6-6-6-6M8 6l-6 6 6 6" />), 'Code', '`', '`', 'code')}
+      {btn(ic(
+        <>
+          <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+          <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+        </>
+      ), 'Link', '[', '](url)', 'text')}
+      {btn(ic(
+        <>
+          <path d="M6 21V3" strokeWidth="3" opacity="0.4" />
+          <path d="M11 6h10M11 12h10M11 18h8" />
+        </>
+      ), 'Quote', '> ', '', 'quote')}
+      {btn(ic(<path d="M3 12h18" />), 'Divider', '\n---\n', '', '')}
+    </div>
+  );
+}
 
 function EditableDate({ value, onSave }) {
   const [editing, setEditing] = useState(false);
@@ -185,6 +338,8 @@ export default function BugDetail({ bug, onBack, updateBug, meta, onBugUpdated }
   const [editingDesc, setEditingDesc] = useState(false);
   const [descDraft, setDescDraft] = useState('');
   const [saving, setSaving] = useState(null); // field name being saved
+  const [editorTab, setEditorTab] = useState('write');
+  const descTextareaRef = useRef(null);
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleDraft, setTitleDraft] = useState(bug?.title || '');
   const titleRef = useRef(null);
@@ -420,7 +575,7 @@ export default function BugDetail({ bug, onBack, updateBug, meta, onBugUpdated }
           </div>
           {!editingDesc ? (
             <button
-              onClick={() => { setDescDraft(description); setEditingDesc(true); }}
+              onClick={() => { setDescDraft(description); setEditingDesc(true); setEditorTab('write'); }}
               style={{
                 background: 'none', border: `1px solid ${T.border}`, color: T.textDim,
                 borderRadius: T.radiusSm, padding: '4px 12px', fontSize: '12px',
@@ -450,20 +605,55 @@ export default function BugDetail({ bug, onBack, updateBug, meta, onBugUpdated }
           )}
         </div>
         {editingDesc ? (
-          <textarea
-            autoFocus
-            value={descDraft}
-            onChange={(e) => setDescDraft(e.target.value)}
-            style={{
-              width: '100%', minHeight: 200, background: T.bgSubtle,
-              color: T.text, border: `1px solid ${T.borderActive}`,
-              borderRadius: T.radiusSm, padding: '12px 14px',
-              fontSize: '13px', fontFamily: T.font, lineHeight: 1.8,
-              resize: 'vertical', outline: 'none', boxSizing: 'border-box',
-            }}
-          />
+          <>
+            {/* Write / Preview tabs */}
+            <div style={{ display: 'flex', gap: 0, marginBottom: 10, borderBottom: `1px solid ${T.border}` }}>
+              {['write', 'preview'].map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setEditorTab(tab)}
+                  style={{
+                    background: 'none', border: 'none', borderBottom: editorTab === tab ? `2px solid ${T.accent}` : '2px solid transparent',
+                    color: editorTab === tab ? T.text : T.textDim,
+                    padding: '6px 14px', fontSize: '12px', fontFamily: T.fontSans,
+                    fontWeight: 500, cursor: 'pointer', textTransform: 'capitalize',
+                    transition: `all 0.15s ${T.ease}`, marginBottom: -1,
+                  }}
+                >{tab}</button>
+              ))}
+            </div>
+            {editorTab === 'write' ? (
+              <>
+                <MarkdownToolbar textareaRef={descTextareaRef} value={descDraft} onChange={setDescDraft} />
+                <textarea
+                  ref={descTextareaRef}
+                  autoFocus
+                  value={descDraft}
+                  onChange={(e) => setDescDraft(e.target.value)}
+                  onKeyDown={(e) => handleListContinue(e, descTextareaRef, descDraft, setDescDraft)}
+                  style={{
+                    width: '100%', minHeight: 200, marginTop: 8, background: T.bgSubtle,
+                    color: T.text, border: `1px solid ${T.borderActive}`,
+                    borderRadius: T.radiusSm, padding: '12px 14px',
+                    fontSize: '13px', fontFamily: T.font, lineHeight: 1.8,
+                    resize: 'vertical', outline: 'none', boxSizing: 'border-box',
+                  }}
+                />
+              </>
+            ) : (
+              <div style={{
+                minHeight: 200, background: T.bgSubtle,
+                border: `1px solid ${T.border}`, borderRadius: T.radiusSm,
+                padding: '12px 14px',
+              }}>
+                {descDraft ? <MarkdownRenderer content={descDraft} /> : (
+                  <span style={{ fontSize: '13px', color: T.textDim, fontFamily: T.fontSans, fontStyle: 'italic' }}>Nothing to preview</span>
+                )}
+              </div>
+            )}
+          </>
         ) : description ? (
-          <pre style={{ fontFamily: T.font, fontSize: '13px', color: T.text, lineHeight: 1.8, whiteSpace: 'pre-wrap', margin: 0 }}>{description}</pre>
+          <MarkdownRenderer content={description} />
         ) : (
           <span style={{ fontSize: '13px', color: T.textDim, fontFamily: T.fontSans, fontStyle: 'italic' }}>No description</span>
         )}

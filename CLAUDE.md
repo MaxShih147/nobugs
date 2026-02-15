@@ -109,6 +109,10 @@ npm run build        # Production build to /dist
 - **When the user says something correlating to "pass"** (e.g. "pass", "looks good", "it works", "approved"), ask them if they want to commit and push
 - **When the user says "add a rule"**, add the rule to this CLAUDE.md file
 
+## Naming
+
+- **Page body / description** — refers to Notion block content (the page body text), not a database property field. It is fetched and saved separately from bug properties.
+
 ## TODO
 
 - [ ] Remove OAuth integration from Notion (no longer used)
