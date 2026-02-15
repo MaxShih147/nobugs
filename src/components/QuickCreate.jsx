@@ -1,13 +1,28 @@
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
-import { T, glass, priorityColor, statusColor } from '../styles/tokens';
+import { T, glass, priorityColor, statusColor, stripEmoji } from '../styles/tokens';
 import { parseCommand } from '../lib/commandParser';
 
 const fieldStyle = {
   width: '100%', padding: '10px 14px',
   background: 'rgba(255, 255, 255, 0.03)',
   border: `1px solid ${T.border}`, borderRadius: T.radiusSm,
-  color: T.text, fontSize: '13px', fontFamily: T.fontSans, outline: 'none',
+  color: T.text, fontSize: '12px', fontFamily: T.fontSans, outline: 'none',
   boxSizing: 'border-box', transition: `all 0.25s ${T.ease}`,
+  WebkitAppearance: 'none', MozAppearance: 'none', appearance: 'none',
+};
+
+const selectStyle = {
+  ...fieldStyle,
+  cursor: 'pointer',
+  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%236b7084'/%3E%3C/svg%3E")`,
+  backgroundRepeat: 'no-repeat',
+  backgroundPosition: 'right 10px center',
+  paddingRight: 28,
+};
+
+const numberStyle = {
+  ...fieldStyle,
+  MozAppearance: 'textfield',
 };
 
 const labelStyle = {
@@ -16,13 +31,18 @@ const labelStyle = {
   marginBottom: 6, display: 'block',
 };
 
-function SelectField({ label, value, onChange, options, placeholder }) {
+function SelectField({ label, value, onChange, options, placeholder, colorFn, cleanEmoji }) {
+  const color = colorFn && value ? colorFn(value) : undefined;
   return (
     <div>
       <label style={labelStyle}>{label}</label>
-      <select value={value} onChange={(e) => onChange(e.target.value)} style={{ ...fieldStyle, cursor: 'pointer' }}>
+      <select value={value} onChange={(e) => onChange(e.target.value)}
+        style={{ ...selectStyle, ...(color ? { color, borderColor: `${color}40` } : {}) }}>
         <option value="">{placeholder || `Select...`}</option>
-        {options.map((o) => <option key={o} value={o}>{o}</option>)}
+        {options.map((o) => {
+          const clean = cleanEmoji ? stripEmoji(o) : o;
+          return <option key={o} value={clean}>{clean}</option>;
+        })}
       </select>
     </div>
   );
@@ -264,7 +284,7 @@ export default function QuickCreate({ meta, createBug }) {
         </div>
 
         {/* Preview chips */}
-        {hasContent && hasChips && (
+        {hasChips && (
           <div style={{
             display: 'flex', flexWrap: 'wrap', gap: 6,
             padding: '6px 0 2px 18px',
@@ -317,19 +337,23 @@ export default function QuickCreate({ meta, createBug }) {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
               {hasStatuses && (
                 <SelectField label="Status" value={mergedFields.status || ''}
-                  onChange={(v) => handleFormChange('status', v)} options={meta.statuses} />
+                  onChange={(v) => handleFormChange('status', v)} options={meta.statuses}
+                  colorFn={statusColor} />
               )}
               {hasPriorities && (
                 <SelectField label="Priority" value={mergedFields.priority || ''}
-                  onChange={(v) => handleFormChange('priority', v)} options={meta.priorities} />
+                  onChange={(v) => handleFormChange('priority', v)} options={meta.priorities}
+                  colorFn={priorityColor} cleanEmoji />
               )}
               {hasTypes && (
                 <SelectField label="Type" value={mergedFields.type || ''}
-                  onChange={(v) => handleFormChange('type', v)} options={meta.types} />
+                  onChange={(v) => handleFormChange('type', v)} options={meta.types}
+                  cleanEmoji />
               )}
               {hasScopes && (
                 <SelectField label="Scope" value={mergedFields.scope || ''}
-                  onChange={(v) => handleFormChange('scope', v)} options={meta.scopes} />
+                  onChange={(v) => handleFormChange('scope', v)} options={meta.scopes}
+                  cleanEmoji />
               )}
               {hasSizes && (
                 <SelectField label="Size" value={mergedFields.size || ''}
@@ -358,7 +382,7 @@ export default function QuickCreate({ meta, createBug }) {
                 <label style={labelStyle}>Points</label>
                 <input type="number" min="0" value={mergedFields.points ?? ''}
                   onChange={(e) => handleFormChange('points', e.target.value === '' ? undefined : Number(e.target.value))}
-                  placeholder="0" style={fieldStyle} />
+                  placeholder="0" style={numberStyle} />
               </div>
             </div>
           </div>
