@@ -62,10 +62,10 @@ function HelpTip() {
   const lines = [
     ['/b, /f, /i', 'Type: Bug, Feature, Improve'],
     ['#epic, #story, #task', 'Scope shortcut'],
-    ['/p 0-4 or urgent/high/low', 'Priority'],
+    ['/p 1-4 or urgent/high/low', 'Priority (P1-P4)'],
     ['/s <status>', 'Status (fuzzy match)'],
-    ['/who <name>', 'Assignee (fuzzy match)'],
-    ['/when 2/20 or 2026-02-20', 'Due date'],
+    ['/who or @<name>', 'Assignee (fuzzy match)'],
+    ['/due 2/20 or 2026-02-20', 'Due date'],
     ['/sprint <name>', 'Sprint (fuzzy match)'],
     ['/pts <number>', 'Story points'],
     ['/size <value>', 'Size (fuzzy match)'],
@@ -224,7 +224,7 @@ export default function QuickCreate({ meta, createBug }) {
             value={input}
             onChange={(e) => { setInput(e.target.value); setError(null); }}
             onKeyDown={handleKeyDown}
-            placeholder="/b slicer crash on import /p 1 #story /who chloe /when 2/20"
+            placeholder="/b slicer crash on import /p 1 #story @chloe /due 2/20"
             style={{
               flex: 1, padding: '8px 0', border: 'none',
               background: 'transparent', color: T.text,

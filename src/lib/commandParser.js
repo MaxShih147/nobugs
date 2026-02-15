@@ -10,13 +10,18 @@ const SCOPE_SHORTCUTS = {
   '#task': 'Task',
 };
 
-const PRIORITY_MAP = {
-  'urgent': 'Critical', '0': 'Critical', 'p0': 'Critical', 'critical': 'Critical',
-  'high': 'High', '1': 'High', 'p1': 'High',
-  '2': 'Medium', 'medium': 'Medium', 'p2': 'Medium',
-  'low': 'Low', '3': 'Low', 'p3': 'Low',
-  '4': 'Low', 'p4': 'Low',
+// Maps input → P-number prefix to fuzzy match against meta.priorities
+const PRIORITY_NUM_MAP = {
+  'urgent': 'P1', '0': 'P1', 'p0': 'P1', 'critical': 'P1',
+  '1': 'P1', 'p1': 'P1', 'high': 'P1',
+  '2': 'P2', 'p2': 'P2',
+  '3': 'P3', 'p3': 'P3', 'medium': 'P3',
+  '4': 'P4', 'p4': 'P4', 'low': 'P4',
 };
+
+function stripEmoji(s) {
+  return s.replace(/[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{FE0F}]/gu, '').trim();
+}
 
 function fuzzyMatch(input, options) {
   if (!options || options.length === 0) return null;
@@ -68,6 +73,22 @@ export function parseCommand(input, meta = {}) {
       continue;
     }
 
+    // @name shortcut for /who
+    if (token.startsWith('@') && token.length > 1) {
+      const name = token.slice(1);
+      const matched = fuzzyMatch(name, meta.members);
+      if (matched) { fields.assignee = matched; i++; continue; }
+      if (meta.memberMappings?.length > 0) {
+        const lw = name.toLowerCase();
+        const emailMatch = meta.memberMappings.find((m) =>
+          m.email && m.email.toLowerCase().includes(lw)
+        );
+        if (emailMatch) { fields.assignee = emailMatch.name; i++; continue; }
+      }
+      warnings.push(`Unknown member: ${name}`);
+      i++; continue;
+    }
+
     // Slash commands that take a value
     if (token.startsWith('/') && token.length > 1) {
       const cmd = lower.slice(1);
@@ -85,7 +106,7 @@ export function parseCommand(input, meta = {}) {
 
       if (cmd === 'scope' && val) {
         const matched = fuzzyMatch(val, meta.scopes);
-        if (matched) { fields.scope = matched; i += 2; continue; }
+        if (matched) { fields.scope = stripEmoji(matched); i += 2; continue; }
         const common = fuzzyMatch(val, ['Epic', 'Story', 'Task']);
         if (common) { fields.scope = common; i += 2; continue; }
         warnings.push(`Unknown scope: ${val}`);
@@ -93,11 +114,15 @@ export function parseCommand(input, meta = {}) {
       }
 
       if (cmd === 'p' && val) {
-        const mapped = PRIORITY_MAP[val.toLowerCase()];
-        if (mapped) { fields.priority = mapped; i += 2; continue; }
-        // Try fuzzy against meta priorities
+        const prefix = PRIORITY_NUM_MAP[val.toLowerCase()];
+        if (prefix && meta.priorities?.length > 0) {
+          // Find the meta priority that starts with the P-number prefix
+          const match = meta.priorities.find((p) => p.toUpperCase().startsWith(prefix));
+          if (match) { fields.priority = stripEmoji(match); i += 2; continue; }
+        }
+        // Fallback: fuzzy match directly against meta priorities
         const metaMatch = fuzzyMatch(val, meta.priorities);
-        if (metaMatch) { fields.priority = metaMatch; i += 2; continue; }
+        if (metaMatch) { fields.priority = stripEmoji(metaMatch); i += 2; continue; }
         warnings.push(`Unknown priority: ${val}`);
         i += 2; continue;
       }
@@ -124,7 +149,7 @@ export function parseCommand(input, meta = {}) {
         i += 2; continue;
       }
 
-      if ((cmd === 'when' || cmd === 'due') && val) {
+      if (cmd === 'due' && val) {
         const parsed = parseDate(val);
         if (parsed) { fields.due = parsed; i += 2; continue; }
         warnings.push(`Invalid date: ${val}`);
