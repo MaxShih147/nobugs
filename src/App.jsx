@@ -102,6 +102,8 @@ export default function App() {
   const [authState, setAuthState] = useState({ loading: true, authEnabled: false, authenticated: false, user: null });
   const { bugs, meta, loading, error, filters, createBug, reload } = useBugs();
 
+  const handleSelect = (bug) => setDetailBug(bug);
+
   useEffect(() => {
     fetchAuthStatus()
       .then((data) => setAuthState({ loading: false, authEnabled: data.authEnabled, authenticated: data.authenticated, user: data.user || null }))
@@ -176,11 +178,11 @@ export default function App() {
       <Header view={view} onViewChange={setView} filters={filters} meta={meta} user={authState.user} />
       <QuickCreate meta={meta} createBug={createBug} />
       {view === 'admin' && authState.user?.isAdmin && <AdminView user={authState.user} />}
-      {view === 'summary' && <SummaryView bugs={bugs} meta={meta} onSelect={setDetailBug} />}
-      {view === 'kanban' && <KanbanView bugs={bugs} meta={meta} onSelect={setDetailBug} />}
-      {view === 'member' && <MemberView bugs={bugs} meta={meta} onSelect={setDetailBug} />}
-      {view === 'project' && <ProjectView bugs={bugs} meta={meta} onSelect={setDetailBug} />}
-      {view === 'roadmap' && <RoadmapView bugs={bugs} meta={meta} onSelect={setDetailBug} />}
+      {view === 'summary' && <SummaryView bugs={bugs} meta={meta} onSelect={handleSelect} />}
+      {view === 'kanban' && <KanbanView bugs={bugs} meta={meta} onSelect={handleSelect} />}
+      {view === 'member' && <MemberView bugs={bugs} meta={meta} onSelect={handleSelect} />}
+      {view === 'project' && <ProjectView bugs={bugs} meta={meta} onSelect={handleSelect} />}
+      {view === 'roadmap' && <RoadmapView bugs={bugs} meta={meta} onSelect={handleSelect} />}
       <div style={{
         padding: '14px 32px', borderTop: `1px solid ${T.border}`,
         fontSize: '11px', color: T.textDim, fontFamily: T.fontSans,

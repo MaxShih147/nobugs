@@ -138,6 +138,20 @@ function HelpTip() {
   );
 }
 
+const DESC_SECTIONS = [
+  { key: 'summary', label: 'Summary', placeholder: 'Brief overview of the issue', rows: 2 },
+  { key: 'steps', label: 'Steps to Reproduce', placeholder: '1. Go to...\n2. Click on...\n3. Observe...', rows: 3 },
+  { key: 'expected', label: 'Expected', placeholder: 'What should happen', rows: 2 },
+  { key: 'actual', label: 'Actual', placeholder: 'What actually happens', rows: 2 },
+];
+
+function buildDescription(sections) {
+  return DESC_SECTIONS
+    .filter((sec) => sections[sec.key]?.trim())
+    .map((sec) => `## ${sec.label}\n${sections[sec.key].trim()}`)
+    .join('\n\n');
+}
+
 function Toast({ title, id, onDismiss }) {
   useEffect(() => {
     const timer = setTimeout(onDismiss, 3000);
@@ -170,6 +184,7 @@ export default function QuickCreate({ meta, createBug }) {
   const [submitting, setSubmitting] = useState(false);
   const [toast, setToast] = useState(null);
   const [error, setError] = useState(null);
+  const [descSections, setDescSections] = useState({ summary: '', steps: '', expected: '', actual: '' });
   const inputRef = useRef(null);
 
   const parsed = useMemo(() => parseCommand(input, meta), [input, meta]);
@@ -184,6 +199,10 @@ export default function QuickCreate({ meta, createBug }) {
     setFormOverrides((prev) => ({ ...prev, [key]: val }));
   }, []);
 
+  const handleDescChange = useCallback((key, val) => {
+    setDescSections((prev) => ({ ...prev, [key]: val }));
+  }, []);
+
   const handleSubmit = useCallback(async () => {
     const title = parsed.title;
     if (!title.trim()) { setError('Type a title to create a bug'); return; }
@@ -191,6 +210,9 @@ export default function QuickCreate({ meta, createBug }) {
     setError(null);
     try {
       const data = { title, ...mergedFields };
+      // Combine description sections
+      const desc = buildDescription(descSections);
+      if (desc) data.description = desc;
       // Clean empty values
       Object.keys(data).forEach((k) => {
         if (data[k] === '' || data[k] === undefined) delete data[k];
@@ -199,13 +221,14 @@ export default function QuickCreate({ meta, createBug }) {
       setToast({ title: created.title, id: created.id });
       setInput('');
       setFormOverrides({});
+      setDescSections({ summary: '', steps: '', expected: '', actual: '' });
       setExpanded(false);
     } catch (err) {
       setError(err.message);
     } finally {
       setSubmitting(false);
     }
-  }, [parsed.title, mergedFields, createBug]);
+  }, [parsed.title, mergedFields, createBug, descSections]);
 
   const handleKeyDown = useCallback((e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -309,6 +332,9 @@ export default function QuickCreate({ meta, createBug }) {
             {mergedFields.points !== undefined && <Chip label="pts" value={String(mergedFields.points)} />}
             {mergedFields.size && <Chip label="size" value={mergedFields.size} />}
             {mergedFields.project && <Chip label="proj" value={mergedFields.project} />}
+            {Object.values(descSections).some((v) => v.trim()) && (
+              <Chip label="desc" value={`${DESC_SECTIONS.filter((s) => descSections[s.key]?.trim()).length}/${DESC_SECTIONS.length} sections`} />
+            )}
             {parsed.warnings.map((w, i) => <WarningChip key={i} text={w} />)}
             {parsed.title && (
               <span style={{
@@ -383,6 +409,53 @@ export default function QuickCreate({ meta, createBug }) {
                 <input type="number" min="0" value={mergedFields.points ?? ''}
                   onChange={(e) => handleFormChange('points', e.target.value === '' ? undefined : Number(e.target.value))}
                   placeholder="0" style={numberStyle} />
+              </div>
+            </div>
+
+            {/* Description sections */}
+            <div style={{ marginTop: 12 }}>
+              <label style={labelStyle}>Description</label>
+              <div style={{
+                ...fieldStyle, padding: 0, overflow: 'hidden',
+                display: 'flex', flexDirection: 'column', gap: 0,
+              }}>
+                {DESC_SECTIONS.map((sec, idx) => {
+                  const val = descSections[sec.key] || '';
+                  const hasText = val.trim().length > 0;
+                  return (
+                    <div key={sec.key} style={{
+                      borderBottom: idx < DESC_SECTIONS.length - 1 ? `1px solid ${T.border}` : 'none',
+                    }}>
+                      <div style={{
+                        padding: '6px 14px', display: 'flex', alignItems: 'center', gap: 8,
+                        background: hasText ? 'rgba(139, 124, 246, 0.04)' : 'transparent',
+                      }}>
+                        <span style={{
+                          fontSize: '10px', fontWeight: 600, fontFamily: T.fontSans,
+                          textTransform: 'uppercase', letterSpacing: '0.5px',
+                          color: hasText ? T.accent : T.textDim,
+                        }}>{sec.label}</span>
+                        {hasText && <span style={{
+                          width: 5, height: 5, borderRadius: '50%', background: T.accent,
+                          flexShrink: 0,
+                        }} />}
+                      </div>
+                      <textarea
+                        value={val}
+                        onChange={(e) => handleDescChange(sec.key, e.target.value)}
+                        placeholder={sec.placeholder}
+                        rows={sec.rows}
+                        style={{
+                          width: '100%', padding: '4px 14px 8px',
+                          background: 'transparent', border: 'none',
+                          color: T.text, fontSize: '12px', fontFamily: T.font,
+                          lineHeight: 1.7, outline: 'none', resize: 'none',
+                          boxSizing: 'border-box',
+                        }}
+                      />
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>

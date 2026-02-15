@@ -1,7 +1,22 @@
+import { useState, useEffect } from 'react';
 import { T, glass, projectColor, stripEmoji } from '../styles/tokens';
 import { PriorityBadge, StatusBadge } from './ui';
+import { fetchBug } from '../lib/api';
 
 export default function BugDetail({ bug, onBack }) {
+  const [description, setDescription] = useState(bug?.description || '');
+
+  useEffect(() => {
+    if (!bug) return;
+    // If bug already has description (e.g. freshly created), use it
+    if (bug.description) { setDescription(bug.description); return; }
+    // Otherwise fetch full bug to get page content
+    const id = bug.notionId || bug.id;
+    fetchBug(id)
+      .then((full) => { if (full?.description) setDescription(full.description); })
+      .catch(() => {});
+  }, [bug?.id]);
+
   if (!bug) return null;
 
   const fields = [
@@ -49,7 +64,11 @@ export default function BugDetail({ bug, onBack }) {
           fontSize: '11px', color: T.textDim, fontFamily: T.fontSans,
           textTransform: 'uppercase', letterSpacing: '1px', marginBottom: 14, fontWeight: 500,
         }}>Description</div>
-        <pre style={{ fontFamily: T.font, fontSize: '13px', color: T.text, lineHeight: 1.8, whiteSpace: 'pre-wrap' }}>{bug.description}</pre>
+        {description ? (
+          <pre style={{ fontFamily: T.font, fontSize: '13px', color: T.text, lineHeight: 1.8, whiteSpace: 'pre-wrap' }}>{description}</pre>
+        ) : (
+          <span style={{ fontSize: '13px', color: T.textDim, fontFamily: T.fontSans, fontStyle: 'italic' }}>No description</span>
+        )}
       </div>
     </div>
   );

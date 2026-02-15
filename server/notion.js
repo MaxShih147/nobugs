@@ -96,9 +96,22 @@ export async function getAllBugs() {
   return results.map(mapPageToBug);
 }
 
+async function fetchPageDescription(pageId) {
+  try {
+    const blocks = await notion.blocks.children.list({ block_id: pageId, page_size: 100 });
+    return blocks.results.map((b) => {
+      if (b.type === 'heading_2') return `## ${b.heading_2.rich_text.map((t) => t.plain_text).join('')}`;
+      if (b.type === 'paragraph') return b.paragraph.rich_text.map((t) => t.plain_text).join('');
+      return '';
+    }).join('\n');
+  } catch { return ''; }
+}
+
 export async function getBug(pageId) {
   const page = await notion.pages.retrieve({ page_id: pageId });
-  return mapPageToBug(page);
+  const bug = mapPageToBug(page);
+  bug.description = await fetchPageDescription(pageId);
+  return bug;
 }
 
 export async function updateBugInNotion(pageId, updates) {
@@ -130,8 +143,22 @@ export async function createBugInNotion(bugData) {
   if (bugData.points !== undefined && bugData.points !== null) properties[PROP_MAP.points] = { number: bugData.points };
   if (bugData.due) properties[PROP_MAP.due] = { date: { start: bugData.due } };
 
-  const page = await notion.pages.create({ parent: { database_id: databaseId }, properties });
-  return mapPageToBug(page);
+  const createOpts = { parent: { database_id: databaseId }, properties };
+
+  // Add description as page content blocks
+  if (bugData.description) {
+    createOpts.children = bugData.description.split('\n').map((line) => {
+      if (line.startsWith('## ')) {
+        return { object: 'block', type: 'heading_2', heading_2: { rich_text: [{ text: { content: line.slice(3) } }] } };
+      }
+      return { object: 'block', type: 'paragraph', paragraph: { rich_text: [{ text: { content: line } }] } };
+    });
+  }
+
+  const page = await notion.pages.create(createOpts);
+  const bug = mapPageToBug(page);
+  bug.description = bugData.description || '';
+  return bug;
 }
 
 export async function getMeta() {
