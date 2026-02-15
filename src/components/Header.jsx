@@ -43,7 +43,7 @@ function UserMenu({ user }) {
   );
 }
 
-export default function Header({ view, onViewChange, filters, meta, onNewBug, user }) {
+export default function Header({ view, onViewChange, filters, meta, user }) {
   const views = user?.isAdmin
     ? [...VIEWS, { id: 'admin', label: 'Admin' }]
     : VIEWS;
@@ -81,13 +81,6 @@ export default function Header({ view, onViewChange, filters, meta, onNewBug, us
         {meta.projects?.length > 0 && <Select value={filters.project} onChange={filters.setProject} options={meta.projects} placeholder="All Projects" />}
         <Select value={filters.priority} onChange={filters.setPriority} options={meta.priorities?.length > 0 ? meta.priorities : PRIORITIES} placeholder="All Priorities" />
         <Select value={filters.status} onChange={filters.setStatus} options={meta.statuses?.length > 0 ? meta.statuses : STATUSES} placeholder="All Statuses" />
-        <button onClick={onNewBug} style={{
-          padding: '7px 16px', borderRadius: T.radiusSm, border: 'none',
-          background: `linear-gradient(135deg, ${T.accent}, #6366f1)`,
-          color: '#fff', fontSize: '13px', fontWeight: 600,
-          cursor: 'pointer', fontFamily: T.fontSans, whiteSpace: 'nowrap',
-          boxShadow: T.accentGlow, transition: `all 0.25s ${T.ease}`,
-        }}>+ New Bug</button>
         {user && <>
           <div style={{ height: 20, width: 1, background: T.border }} />
           <UserMenu user={user} />

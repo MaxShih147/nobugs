@@ -48,8 +48,17 @@ app.post('/api/bugs', async (req, res) => {
 });
 
 app.get('/api/meta', async (req, res) => {
-  try { res.json(await getMeta()); }
-  catch (err) { console.error('Failed to fetch meta:', err.message); res.status(500).json({ error: err.message }); }
+  try {
+    const meta = await getMeta();
+    // Include members from mappings + discovered names
+    const { mappings } = getMemberMappings();
+    const discovered = getDiscoveredNames();
+    const nameSet = new Set(discovered);
+    (mappings || []).forEach((m) => nameSet.add(m.notionName));
+    meta.members = [...nameSet].sort();
+    meta.memberMappings = (mappings || []).map((m) => ({ name: m.notionName, email: m.email }));
+    res.json(meta);
+  } catch (err) { console.error('Failed to fetch meta:', err.message); res.status(500).json({ error: err.message }); }
 });
 
 app.get('/api/members', (req, res) => {

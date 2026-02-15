@@ -4,12 +4,12 @@ import { useBugs } from './hooks/useBugs';
 import { fetchAuthStatus } from './lib/api';
 import Header from './components/Header';
 import BugDetail from './components/BugDetail';
+import QuickCreate from './components/QuickCreate';
 import SummaryView from './views/SummaryView';
 import KanbanView from './views/KanbanView';
 import MemberView from './views/MemberView';
 import ProjectView from './views/ProjectView';
 import RoadmapView from './views/RoadmapView';
-import CreateView from './views/CreateView';
 import AdminView from './views/AdminView';
 
 function LoginPage({ onLogin }) {
@@ -91,7 +91,7 @@ function LoginPage({ onLogin }) {
 export default function App() {
   const [view, setViewState] = useState(() => {
     const hash = window.location.hash.slice(1);
-    const valid = ['summary', 'kanban', 'member', 'project', 'roadmap', 'create', 'admin'];
+    const valid = ['summary', 'kanban', 'member', 'project', 'roadmap', 'admin'];
     return valid.includes(hash) ? hash : 'summary';
   });
   const setView = (v) => {
@@ -173,9 +173,9 @@ export default function App() {
 
   return (
     <div style={{ minHeight: '100vh', background: T.bg }}>
-      <Header view={view} onViewChange={setView} filters={filters} meta={meta} onNewBug={() => setView('create')} user={authState.user} />
+      <Header view={view} onViewChange={setView} filters={filters} meta={meta} user={authState.user} />
+      <QuickCreate meta={meta} createBug={createBug} />
       {view === 'admin' && authState.user?.isAdmin && <AdminView user={authState.user} />}
-      {view === 'create' && <CreateView meta={meta} onCreate={createBug} onCancel={() => setView('summary')} />}
       {view === 'summary' && <SummaryView bugs={bugs} meta={meta} onSelect={setDetailBug} />}
       {view === 'kanban' && <KanbanView bugs={bugs} meta={meta} onSelect={setDetailBug} />}
       {view === 'member' && <MemberView bugs={bugs} meta={meta} onSelect={setDetailBug} />}
