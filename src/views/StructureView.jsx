@@ -174,31 +174,111 @@ function TreeRow({
   );
 }
 
-// ── Orphan Row (simplified, droppable target for "unlink") ───────────
+// ── Orphan Row (compact, for center pane) ────────────────────────────
 
-function OrphanSection({ orphanNodes, tree, selectedId, highlightedId, onSelect, onDragStart, onDragOver, onDragLeave, onDrop, collapsedSet }) {
-  if (orphanNodes.length === 0) return null;
+function OrphanRow({ node, isSelected, isHighlighted, onSelect, onDragStart }) {
+  const [hover, setHover] = useState(false);
+
+  let bg = 'transparent';
+  if (isSelected) bg = 'rgba(139,124,246,0.06)';
+  else if (isHighlighted) bg = 'rgba(232,211,116,0.06)';
+  else if (hover) bg = 'rgba(255,255,255,0.02)';
+
   return (
-    <div style={{ marginTop: 8 }}>
+    <div
+      draggable
+      onDragStart={(e) => { e.dataTransfer.setData('text/plain', node.id); onDragStart(node); }}
+      onClick={() => onSelect(node)}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      style={{
+        display: 'flex', alignItems: 'center', gap: 6,
+        padding: '7px 12px', borderBottom: `1px solid ${T.border}`,
+        background: bg, cursor: 'grab',
+        transition: `background 0.15s ${T.ease}`, minHeight: 34,
+      }}
+    >
+      <span style={{
+        width: 8, height: 8, borderRadius: '50%', flexShrink: 0,
+        background: scopeColor(node.scope),
+      }} />
+      <span style={{ fontFamily: T.font, fontSize: '10px', color: T.textDim, flexShrink: 0, width: 50 }}>{node.shortId}</span>
+      <span style={{
+        fontSize: '12px', fontFamily: T.fontSans, color: T.text,
+        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1,
+      }}>{node.title}</span>
+      <TypeBadge type={node.type} />
+      <ScopeBadge scope={node.scope} />
+      <StatusDot status={node.status} />
+    </div>
+  );
+}
+
+// ── Unlinked Pane (center column) ────────────────────────────────────
+
+function UnlinkedPane({ orphanNodes, selectedId, highlightedId, onSelect, onDragStart, filterScope, setFilterScope }) {
+  const scopes = useMemo(() => [...new Set(orphanNodes.map((n) => n.scope).filter(Boolean))], [orphanNodes]);
+  const filtered = useMemo(() => {
+    if (filterScope === 'all') return orphanNodes;
+    return orphanNodes.filter((n) => n.scope === filterScope);
+  }, [orphanNodes, filterScope]);
+
+  return (
+    <div style={{
+      display: 'flex', flexDirection: 'column', height: '100%',
+      borderRight: `1px solid ${T.border}`,
+    }}>
+      {/* Header */}
       <div style={{
-        padding: '8px 12px', fontSize: '11px', fontFamily: T.fontSans,
-        color: T.textDim, textTransform: 'uppercase', letterSpacing: '0.8px', fontWeight: 600,
-        borderBottom: `1px solid ${T.border}`,
+        padding: '10px 12px', borderBottom: `1px solid ${T.border}`,
+        display: 'flex', alignItems: 'center', gap: 8,
         background: 'rgba(244,113,113,0.03)',
       }}>
-        Unlinked ({orphanNodes.length})
+        <span style={{
+          fontSize: '11px', fontFamily: T.fontSans, color: T.critical,
+          textTransform: 'uppercase', letterSpacing: '0.8px', fontWeight: 600,
+        }}>Unlinked</span>
+        <span style={{
+          fontSize: '11px', fontFamily: T.font, color: T.textDim,
+          background: 'rgba(244,113,113,0.10)', padding: '1px 8px', borderRadius: T.radiusSm,
+        }}>{filtered.length}</span>
+        <div style={{ flex: 1 }} />
+        <select value={filterScope} onChange={(e) => setFilterScope(e.target.value)} style={{
+          background: 'rgba(255,255,255,0.04)', border: `1px solid ${T.border}`,
+          borderRadius: T.radiusSm, padding: '3px 8px', color: T.text,
+          fontSize: '10px', fontFamily: T.fontSans, outline: 'none', cursor: 'pointer',
+        }}>
+          <option value="all">All scopes</option>
+          {scopes.map((s) => <option key={s} value={s}>{titleCase(s)}</option>)}
+        </select>
       </div>
-      {orphanNodes.map((node) => (
-        <TreeRow
-          key={node.id} node={node} depth={0} hasChildren={false}
-          isCollapsed={false} isSelected={selectedId === node.id}
-          isHighlighted={highlightedId === node.id}
-          isDragOver={false} isDragInvalid={false}
-          onToggle={() => {}} onSelect={onSelect}
-          onDragStart={onDragStart} onDragOver={onDragOver}
-          onDragLeave={onDragLeave} onDrop={onDrop}
-        />
-      ))}
+
+      {/* Hint */}
+      <div style={{
+        padding: '6px 12px', borderBottom: `1px solid ${T.border}`,
+        fontSize: '10px', fontFamily: T.fontSans, color: T.textDim,
+        background: 'rgba(10,11,16,0.3)', display: 'flex', alignItems: 'center', gap: 4,
+      }}>
+        <span style={{ fontSize: '12px' }}>{'\u2190'}</span> Drag items to the tree
+      </div>
+
+      {/* Rows */}
+      <div style={{ flex: 1, overflowY: 'auto' }}>
+        {filtered.length === 0 && (
+          <div style={{ padding: 30, textAlign: 'center', color: T.textDim, fontSize: '12px', fontFamily: T.fontSans }}>
+            {orphanNodes.length === 0 ? 'All items are linked!' : 'No items match filter'}
+          </div>
+        )}
+        {filtered.map((node) => (
+          <OrphanRow
+            key={node.id} node={node}
+            isSelected={selectedId === node.id}
+            isHighlighted={highlightedId === node.id}
+            onSelect={onSelect}
+            onDragStart={onDragStart}
+          />
+        ))}
+      </div>
     </div>
   );
 }
@@ -404,7 +484,7 @@ function UnlinkZone({ isDragActive, onDrop }) {
 export default function StructureView({ allBugs, updateBug }) {
   const [collapsed, setCollapsed] = useState(loadCollapsed);
   const [selectedId, setSelectedId] = useState(loadSelected);
-  const [showOrphansOnly, setShowOrphansOnly] = useState(false);
+  const [orphanFilterScope, setOrphanFilterScope] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [highlightedId, setHighlightedId] = useState(null);
@@ -421,10 +501,7 @@ export default function StructureView({ allBugs, updateBug }) {
   const tree = useMemo(() => buildTree(allBugs), [allBugs]);
 
   // Flatten for display
-  const rows = useMemo(() => {
-    if (showOrphansOnly) return [];
-    return flattenTree(tree, collapsed);
-  }, [tree, collapsed, showOrphansOnly]);
+  const rows = useMemo(() => flattenTree(tree, collapsed), [tree, collapsed]);
 
   const orphanNodes = useMemo(
     () => tree.orphans.map((id) => tree.nodesById[id]).filter(Boolean),
@@ -474,7 +551,6 @@ export default function StructureView({ allBugs, updateBug }) {
       for (const aid of ancestors) next.delete(aid);
       return next;
     });
-    setShowOrphansOnly(false);
     setSelectedId(nodeId);
     setHighlightedId(nodeId);
     setSearchQuery('');
@@ -607,7 +683,7 @@ export default function StructureView({ allBugs, updateBug }) {
 
   return (
     <div style={{ display: 'flex', height: 'calc(100vh - 60px)', overflow: 'hidden' }}>
-      {/* Left pane: Tree */}
+      {/* Left pane: Hierarchy tree (drop target) */}
       <div style={{
         flex: '1 1 0', minWidth: 0, display: 'flex', flexDirection: 'column',
         borderRight: `1px solid ${T.border}`,
@@ -638,15 +714,6 @@ export default function StructureView({ allBugs, updateBug }) {
             />
             <SearchDropdown results={searchResults} onSelect={(n) => jumpToNode(n.id)} />
           </div>
-          <button
-            onClick={() => setShowOrphansOnly(!showOrphansOnly)}
-            style={{
-              ...toolBtn,
-              ...(showOrphansOnly ? { background: 'rgba(244,113,113,0.10)', borderColor: `${T.critical}30`, color: T.critical } : {}),
-            }}
-          >
-            {showOrphansOnly ? `Unlinked (${tree.stats.orphans})` : 'All'}
-          </button>
           <button onClick={expandAll} style={toolBtn}>Expand</button>
           <button onClick={collapseAll} style={toolBtn}>Collapse</button>
         </div>
@@ -661,12 +728,11 @@ export default function StructureView({ allBugs, updateBug }) {
           <span style={{ color: scopeColor('epic') }}>{tree.stats.epics} epics</span>
           <span style={{ color: scopeColor('story') }}>{tree.stats.stories} stories</span>
           <span style={{ color: scopeColor('task') }}>{tree.stats.tasks} tasks</span>
-          <span style={{ color: T.critical }}>{tree.stats.orphans} unlinked</span>
         </div>
 
         {/* Tree rows */}
         <div ref={treeRef} style={{ flex: 1, overflowY: 'auto' }}>
-          {!showOrphansOnly && rows.map(({ node, depth, hasChildren }) => (
+          {rows.map(({ node, depth, hasChildren }) => (
             <div key={node.id} id={`tree-row-${node.id}`}>
               <TreeRow
                 node={node} depth={depth} hasChildren={hasChildren}
@@ -685,33 +751,32 @@ export default function StructureView({ allBugs, updateBug }) {
             </div>
           ))}
 
-          {/* Orphan section */}
-          {(showOrphansOnly || !showOrphansOnly) && (
-            <OrphanSection
-              orphanNodes={showOrphansOnly ? orphanNodes : orphanNodes}
-              tree={tree} selectedId={selectedId} highlightedId={highlightedId}
-              onSelect={(n) => setSelectedId(n.id)}
-              onDragStart={handleDragStart}
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onDrop={handleDrop}
-              collapsedSet={collapsed}
-            />
-          )}
-
-          {/* Unlink drop zone */}
+          {/* Unlink drop zone — appears at bottom of tree when dragging */}
           <UnlinkZone isDragActive={!!dragNode} onDrop={handleUnlinkDrop} />
 
-          {rows.length === 0 && !showOrphansOnly && orphanNodes.length === 0 && (
+          {rows.length === 0 && (
             <div style={{ padding: 40, textAlign: 'center', color: T.textDim, fontSize: '13px', fontFamily: T.fontSans }}>
-              No items found
+              No linked items yet
             </div>
           )}
         </div>
       </div>
 
+      {/* Center pane: Unlinked items (drag source) */}
+      <div style={{ width: 320, flexShrink: 0 }}>
+        <UnlinkedPane
+          orphanNodes={orphanNodes}
+          selectedId={selectedId}
+          highlightedId={highlightedId}
+          onSelect={(n) => setSelectedId(n.id)}
+          onDragStart={handleDragStart}
+          filterScope={orphanFilterScope}
+          setFilterScope={setOrphanFilterScope}
+        />
+      </div>
+
       {/* Right pane: Detail */}
-      <div style={{ width: 320, flexShrink: 0, overflowY: 'auto', background: 'rgba(10,11,16,0.3)' }}>
+      <div style={{ width: 300, flexShrink: 0, overflowY: 'auto', background: 'rgba(10,11,16,0.3)', borderLeft: `1px solid ${T.border}` }}>
         <DetailPanel
           node={selectedNode}
           tree={tree}
