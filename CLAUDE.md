@@ -100,7 +100,12 @@ npm run build        # Production build to /dist
 ## Workflow
 
 - **Do not commit or push** after making changes — the user will test FE+BE manually first, and handle commit/push themselves after verifying
-- **For FE+BE testing** — start both servers (`npm run server` + `npm run dev`), then open the browser with `open http://localhost:3000` so the user can test immediately
+- **For FE+BE testing** — ALWAYS start both servers before opening the browser. This project uses `VITE_DATA_SOURCE=notion` so the Express API server is required:
+  1. Kill any existing processes on ports 3000/3001: `lsof -ti:3000,3001 | xargs kill 2>/dev/null`
+  2. Start the API server: `npm run server` (port 3001)
+  3. Start the dev server: `npm run dev` (port 3000)
+  4. Verify both are up: `curl -s -o /dev/null -w "%{http_code}" http://localhost:3001/api/health` and `curl -s -o /dev/null -w "%{http_code}" http://localhost:3000`
+  5. Open browser: `open http://localhost:3000`
 - **When the user says something correlating to "pass"** (e.g. "pass", "looks good", "it works", "approved"), ask them if they want to commit and push
 - **When the user says "add a rule"**, add the rule to this CLAUDE.md file
 

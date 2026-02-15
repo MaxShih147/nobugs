@@ -18,6 +18,7 @@ export const MOCK_SPRINTS = [
 export const MOCK_TAGS = ['UI', 'Backend', 'API', 'Performance', 'Security', 'Database', 'Auth', 'UX', 'Infra', 'Mobile'];
 const STATUSES = ['Open', 'In Progress', 'In Review', 'Done'];
 const PRIORITIES = ['Critical', 'High', 'Medium', 'Low'];
+const TYPES = ['Bug', 'Feature', 'Improve'];
 
 const TITLES = [
   'Login button unresponsive on mobile Safari',
@@ -91,6 +92,7 @@ export function generateMockBugs() {
         MOCK_TAGS[Math.floor(rand() * MOCK_TAGS.length)],
         MOCK_TAGS[Math.floor(rand() * MOCK_TAGS.length)],
       ].filter((v, j, a) => a.indexOf(v) === j),
+      type: TYPES[Math.floor(rand() * TYPES.length)],
       sprint: MOCK_SPRINTS[Math.floor(rand() * MOCK_SPRINTS.length)],
       created: createdBase.toISOString().slice(0, 10),
       due: status === 'Done' ? null : dueBase.toISOString().slice(0, 10),
