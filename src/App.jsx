@@ -12,6 +12,7 @@ import ListView from './views/ListView';
 import RoadmapView from './views/RoadmapView';
 import UnlinkedView from './views/UnlinkedView';
 import GraphView from './views/GraphView';
+import StructureView from './views/StructureView';
 import AdminView from './views/AdminView';
 
 function LoginPage({ onLogin }) {
@@ -93,7 +94,7 @@ function LoginPage({ onLogin }) {
 export default function App() {
   const [view, setViewState] = useState(() => {
     const hash = window.location.hash.slice(1);
-    const valid = ['summary', 'kanban', 'member', 'list', 'roadmap', 'unlinked', 'graph', 'admin'];
+    const valid = ['summary', 'kanban', 'member', 'list', 'roadmap', 'unlinked', 'graph', 'structure', 'admin'];
     return valid.includes(hash) ? hash : 'summary';
   });
   const setView = (v) => {
@@ -188,6 +189,7 @@ export default function App() {
       {view === 'roadmap' && <RoadmapView bugs={bugs} meta={meta} onSelect={handleSelect} />}
       {view === 'unlinked' && <UnlinkedView bugs={bugs} allBugs={allBugs} meta={meta} onSelect={handleSelect} updateBug={updateBug} />}
       {view === 'graph' && <GraphView allBugs={allBugs} updateBug={updateBug} />}
+      {view === 'structure' && <StructureView allBugs={allBugs} updateBug={updateBug} />}
       <div style={{
         padding: '14px 32px', borderTop: `1px solid ${T.border}`,
         fontSize: '11px', color: T.textDim, fontFamily: T.fontSans,

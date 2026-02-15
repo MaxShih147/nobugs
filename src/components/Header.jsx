@@ -10,6 +10,7 @@ const VIEWS = [
   { id: 'roadmap', label: 'Roadmap' },
   { id: 'unlinked', label: 'Unlinked' },
   { id: 'graph', label: 'Graph' },
+  { id: 'structure', label: 'Structure' },
 ];
 
 function Select({ value, onChange, options, placeholder, colorFn }) {
