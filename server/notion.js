@@ -103,14 +103,55 @@ export async function getAllBugs() {
   return results.map(mapPageToBug);
 }
 
+function blockToText(block, depth) {
+  const indent = '  '.repeat(depth);
+  const rt = block[block.type]?.rich_text;
+  const text = rt ? rt.map((t) => t.plain_text).join('') : '';
+
+  switch (block.type) {
+    case 'heading_1': return `# ${text}`;
+    case 'heading_2': return `## ${text}`;
+    case 'heading_3': return `### ${text}`;
+    case 'paragraph': return text;
+    case 'bulleted_list_item': return `${indent}- ${text}`;
+    case 'numbered_list_item': return `${indent}1. ${text}`;
+    case 'to_do': {
+      const checked = block.to_do?.checked ? 'x' : ' ';
+      return `${indent}- [${checked}] ${text}`;
+    }
+    case 'toggle': return `${indent}> ${text}`;
+    case 'quote': return `> ${text}`;
+    case 'callout': return `> ${text}`;
+    case 'code': return `\`\`\`\n${text}\n\`\`\``;
+    case 'divider': return '---';
+    default: return text;
+  }
+}
+
+async function fetchBlocksRecursive(blockId, depth = 0, maxDepth = 5) {
+  const lines = [];
+  let cursor;
+  do {
+    const res = await notion.blocks.children.list({
+      block_id: blockId, page_size: 100, start_cursor: cursor,
+    });
+    for (const block of res.results) {
+      const line = blockToText(block, depth);
+      if (line) lines.push(line);
+      if (block.has_children && depth < maxDepth) {
+        const childLines = await fetchBlocksRecursive(block.id, depth + 1, maxDepth);
+        lines.push(...childLines);
+      }
+    }
+    cursor = res.has_more ? res.next_cursor : undefined;
+  } while (cursor);
+  return lines;
+}
+
 async function fetchPageDescription(pageId) {
   try {
-    const blocks = await notion.blocks.children.list({ block_id: pageId, page_size: 100 });
-    return blocks.results.map((b) => {
-      if (b.type === 'heading_2') return `## ${b.heading_2.rich_text.map((t) => t.plain_text).join('')}`;
-      if (b.type === 'paragraph') return b.paragraph.rich_text.map((t) => t.plain_text).join('');
-      return '';
-    }).join('\n');
+    const lines = await fetchBlocksRecursive(pageId);
+    return lines.join('\n');
   } catch { return ''; }
 }
 
@@ -132,6 +173,9 @@ export async function updateBugInNotion(pageId, updates) {
   if (updates.points !== undefined) properties[PROP_MAP.points] = { number: updates.points };
   if (updates.due !== undefined) {
     properties[PROP_MAP.due] = updates.due ? { date: { start: updates.due } } : { date: null };
+  }
+  if (updates.title) {
+    properties[PROP_MAP.title] = { title: [{ text: { content: updates.title } }] };
   }
   if (updates.parentNotionId !== undefined) {
     properties[PROP_MAP.parent] = updates.parentNotionId
@@ -171,6 +215,36 @@ export async function createBugInNotion(bugData) {
   const bug = mapPageToBug(page);
   bug.description = bugData.description || '';
   return bug;
+}
+
+export async function updatePageDescription(pageId, text) {
+  // 1. Fetch existing blocks
+  const existing = [];
+  let cursor;
+  do {
+    const res = await notion.blocks.children.list({ block_id: pageId, page_size: 100, start_cursor: cursor });
+    existing.push(...res.results);
+    cursor = res.has_more ? res.next_cursor : undefined;
+  } while (cursor);
+
+  // 2. Delete each block
+  for (const block of existing) {
+    await notion.blocks.delete({ block_id: block.id });
+  }
+
+  // 3. Create new blocks from text
+  if (text && text.trim()) {
+    const children = text.split('\n').map((line) => {
+      if (line.startsWith('## ')) {
+        return { object: 'block', type: 'heading_2', heading_2: { rich_text: [{ text: { content: line.slice(3) } }] } };
+      }
+      return { object: 'block', type: 'paragraph', paragraph: { rich_text: [{ text: { content: line } }] } };
+    });
+    // Notion limits append to 100 blocks at a time
+    for (let i = 0; i < children.length; i += 100) {
+      await notion.blocks.children.append({ block_id: pageId, children: children.slice(i, i + 100) });
+    }
+  }
 }
 
 export async function getMeta() {

@@ -79,6 +79,22 @@ export async function createBug(bug) {
   return res.json();
 }
 
+export async function updateDescription(id, text) {
+  if (USE_MOCK) {
+    const bugs = getMockBugs();
+    const bug = bugs.find((b) => b.id === id || b.notionId === id);
+    if (bug) bug.description = text;
+    return { ok: true };
+  }
+  const res = await authFetch(`${API_BASE}/bugs/${id}/description`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ description: text }),
+  });
+  if (!res.ok) throw new Error('Failed to update description');
+  return res.json();
+}
+
 export async function fetchMembers() {
   if (USE_MOCK) {
     return { mappings: [], updatedAt: null, updatedBy: null };

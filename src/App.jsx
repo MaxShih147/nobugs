@@ -172,7 +172,13 @@ export default function App() {
   if (detailBug) {
     return (
       <div style={{ minHeight: '100vh', background: T.bg }}>
-        <BugDetail bug={detailBug} onBack={() => setDetailBug(null)} />
+        <BugDetail
+          bug={detailBug}
+          onBack={() => setDetailBug(null)}
+          updateBug={updateBug}
+          meta={meta}
+          onBugUpdated={(updated) => setDetailBug(updated)}
+        />
       </div>
     );
   }

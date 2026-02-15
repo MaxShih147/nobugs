@@ -2,7 +2,7 @@ import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
-import { getAllBugs, getBug, updateBugInNotion, createBugInNotion, getMeta } from './notion.js';
+import { getAllBugs, getBug, updateBugInNotion, createBugInNotion, getMeta, updatePageDescription } from './notion.js';
 import { createAuthRouter, requireAuth, requireAdmin, isAuthEnabled } from './auth.js';
 import { getMemberMappings, saveMemberMappings, cacheDiscoveredNames, getDiscoveredNames } from './members.js';
 
@@ -40,6 +40,13 @@ app.get('/api/bugs/:id', async (req, res) => {
 app.patch('/api/bugs/:id', async (req, res) => {
   try { res.json(await updateBugInNotion(req.params.id, req.body)); }
   catch (err) { console.error('Failed to update bug:', err.message); res.status(500).json({ error: err.message }); }
+});
+
+app.put('/api/bugs/:id/description', async (req, res) => {
+  try {
+    await updatePageDescription(req.params.id, req.body.description);
+    res.json({ ok: true });
+  } catch (err) { console.error('Failed to update description:', err.message); res.status(500).json({ error: err.message }); }
 });
 
 app.post('/api/bugs', async (req, res) => {
