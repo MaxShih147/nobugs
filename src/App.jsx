@@ -178,6 +178,7 @@ export default function App() {
           updateBug={updateBug}
           meta={meta}
           onBugUpdated={(updated) => setDetailBug(updated)}
+          allBugs={allBugs}
         />
       </div>
     );

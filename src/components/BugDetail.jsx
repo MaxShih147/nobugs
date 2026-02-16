@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
 import { T, glass, typeColor, scopeColor, stripEmoji, formatDate } from '../styles/tokens';
-import { PriorityBadge, StatusBadge } from './ui';
+import { Badge, PriorityBadge, StatusBadge } from './ui';
 import { fetchBug, updateDescription } from '../lib/api';
 
 marked.setOptions({ gfm: true, breaks: true });
@@ -333,7 +333,180 @@ function EditableInput({ value, onSave, type = 'text', placeholder }) {
   );
 }
 
-export default function BugDetail({ bug, onBack, updateBug, meta, onBugUpdated }) {
+function titleCase(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : ''; }
+
+function ScopeBadge({ scope }) {
+  if (!scope) return null;
+  return <Badge color={scopeColor(scope)} bg={`${scopeColor(scope)}18`} style={{ fontSize: '10px', padding: '2px 6px' }}>{titleCase(scope)}</Badge>;
+}
+
+function ParentChooser({ bug, allBugs, updateBug, onBugUpdated }) {
+  const [showPicker, setShowPicker] = useState(false);
+  const [search, setSearch] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  const bugScope = (bug.scope || '').toLowerCase();
+  const validParentScope = bugScope === 'story' ? 'epic' : bugScope === 'task' ? 'story' : null;
+  const bugNotionId = bug.notionId || bug.id;
+
+  const candidateParents = useMemo(() => {
+    if (!validParentScope) return [];
+    return allBugs.filter((b) => {
+      const s = (b.scope || '').toLowerCase();
+      return s === validParentScope && (b.notionId || b.id) !== bugNotionId;
+    });
+  }, [allBugs, validParentScope, bugNotionId]);
+
+  const filteredParents = useMemo(() => {
+    if (!search) return candidateParents;
+    const q = search.toLowerCase();
+    return candidateParents.filter((b) =>
+      b.title.toLowerCase().includes(q) || b.id.toLowerCase().includes(q)
+    );
+  }, [candidateParents, search]);
+
+  const currentParent = useMemo(() => {
+    if (!bug.parentNotionId) return null;
+    return allBugs.find((b) => (b.notionId || b.id) === bug.parentNotionId) || null;
+  }, [allBugs, bug.parentNotionId]);
+
+  const children = useMemo(() => {
+    return allBugs.filter((b) => b.parentNotionId === bugNotionId);
+  }, [allBugs, bugNotionId]);
+
+  const handleSelectParent = async (parent) => {
+    setShowPicker(false);
+    setSearch('');
+    setSaving(true);
+    try {
+      const parentId = parent.notionId || parent.id;
+      const updated = await updateBug(bugNotionId, { parentNotionId: parentId });
+      if (onBugUpdated) onBugUpdated({ ...bug, ...updated, parentNotionId: parentId });
+    } catch { /* handled in useBugs */ }
+    setSaving(false);
+  };
+
+  const handleUnlink = async () => {
+    setSaving(true);
+    try {
+      const updated = await updateBug(bugNotionId, { parentNotionId: null });
+      if (onBugUpdated) onBugUpdated({ ...bug, ...updated, parentNotionId: null });
+    } catch { /* handled in useBugs */ }
+    setSaving(false);
+  };
+
+  const sectionStyle = {
+    padding: '14px', borderRadius: T.radiusSm, border: `1px solid ${T.border}`,
+    background: 'rgba(255,255,255,0.02)', marginBottom: 14,
+  };
+  const sectionLabel = {
+    fontSize: '10px', fontFamily: T.fontSans, color: T.textDim,
+    textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 8, fontWeight: 600,
+    display: 'flex', alignItems: 'center', gap: 6,
+  };
+  const btnStyle = {
+    padding: '5px 10px', borderRadius: T.radiusSm, border: `1px solid ${T.border}`,
+    background: 'rgba(255,255,255,0.03)', color: T.textDim, fontSize: '11px',
+    fontFamily: T.fontSans, cursor: 'pointer', fontWeight: 500,
+  };
+
+  return (
+    <div>
+      <div style={{ ...sectionLabel, marginBottom: 14, fontSize: '11px', letterSpacing: '1px' }}>
+        Hierarchy
+        {saving && <span style={{ fontSize: '10px', color: T.accent, fontStyle: 'italic', textTransform: 'none', letterSpacing: 0 }}>saving...</span>}
+      </div>
+
+      {/* Parent section — hidden for epics */}
+      {validParentScope && (
+        <div style={sectionStyle}>
+          <div style={sectionLabel}>Parent</div>
+          {currentParent ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <ScopeBadge scope={currentParent.scope} />
+              <span style={{
+                fontSize: '12px', fontFamily: T.fontSans, color: T.text,
+                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1,
+              }}>{currentParent.title}</span>
+            </div>
+          ) : (
+            <span style={{ fontSize: '12px', fontFamily: T.fontSans, color: T.textDim }}>None (unlinked)</span>
+          )}
+
+          <div style={{ display: 'flex', gap: 6, marginTop: 10 }}>
+            <button onClick={() => { setShowPicker(!showPicker); setSearch(''); }} style={btnStyle}>
+              {showPicker ? 'Cancel' : 'Change parent'}
+            </button>
+            {currentParent && (
+              <button onClick={handleUnlink} style={{ ...btnStyle, borderColor: `${T.critical}30`, color: T.critical }}>
+                Unlink
+              </button>
+            )}
+          </div>
+
+          {showPicker && (
+            <div style={{ marginTop: 10 }}>
+              <input
+                value={search} onChange={(e) => setSearch(e.target.value)}
+                placeholder={`Search ${validParentScope}s...`} autoFocus
+                style={{
+                  width: '100%', boxSizing: 'border-box',
+                  background: 'rgba(255,255,255,0.04)', border: `1px solid ${T.border}`,
+                  borderRadius: T.radiusSm, padding: '7px 10px', color: T.text,
+                  fontSize: '12px', fontFamily: T.fontSans, outline: 'none', marginBottom: 6,
+                }}
+              />
+              <div style={{ maxHeight: 200, overflowY: 'auto' }}>
+                {filteredParents.slice(0, 30).map((p) => (
+                  <div key={p.notionId || p.id} onClick={() => handleSelectParent(p)}
+                    style={{
+                      padding: '6px 8px', cursor: 'pointer', fontSize: '12px',
+                      fontFamily: T.fontSans, color: T.text, borderRadius: T.radiusSm,
+                      display: 'flex', alignItems: 'center', gap: 6,
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(139,124,246,0.08)'}
+                    onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
+                    <span style={{ fontFamily: T.font, fontSize: '10px', color: T.textDim, flexShrink: 0 }}>{p.id}</span>
+                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.title}</span>
+                  </div>
+                ))}
+                {filteredParents.length === 0 && (
+                  <div style={{ padding: 8, fontSize: '12px', color: T.textDim, fontFamily: T.fontSans }}>No matches</div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Children section */}
+      {children.length > 0 && (
+        <div style={sectionStyle}>
+          <div style={sectionLabel}>Children ({children.length})</div>
+          {children.map((c) => (
+            <div key={c.notionId || c.id} style={{
+              padding: '5px 8px', fontSize: '12px',
+              fontFamily: T.fontSans, color: T.text, display: 'flex', alignItems: 'center', gap: 6,
+              borderRadius: T.radiusSm,
+            }}>
+              <ScopeBadge scope={c.scope} />
+              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.title}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Empty state for epics with no children */}
+      {!validParentScope && children.length === 0 && (
+        <div style={{ fontSize: '12px', fontFamily: T.fontSans, color: T.textDim, fontStyle: 'italic' }}>
+          No hierarchy links
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default function BugDetail({ bug, onBack, updateBug, meta, onBugUpdated, allBugs }) {
   const [description, setDescription] = useState(bug?.description || '');
   const [editingDesc, setEditingDesc] = useState(false);
   const [descDraft, setDescDraft] = useState('');
@@ -406,7 +579,7 @@ export default function BugDetail({ bug, onBack, updateBug, meta, onBugUpdated }
   );
 
   return (
-    <div className="slide-in" style={{ padding: 32, maxWidth: 800 }}>
+    <div className="slide-in" style={{ padding: 32, maxWidth: 1100 }}>
       <button onClick={onBack} style={{
         background: 'none', border: 'none', color: T.accent, cursor: 'pointer',
         fontFamily: T.fontSans, fontSize: '13px', fontWeight: 500, marginBottom: 24,
@@ -415,6 +588,10 @@ export default function BugDetail({ bug, onBack, updateBug, meta, onBugUpdated }
       }}>
         <span style={{ fontSize: '16px' }}>{'\u2190'}</span> Back to list
       </button>
+
+      <div style={{ display: 'flex', gap: 28, alignItems: 'flex-start' }}>
+        {/* Left column — page info + body */}
+        <div style={{ flex: 1, minWidth: 0 }}>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
         <span style={{ fontFamily: T.font, fontSize: '14px', color: T.textDim }}>{bug.id}</span>
@@ -656,6 +833,15 @@ export default function BugDetail({ bug, onBack, updateBug, meta, onBugUpdated }
           <MarkdownRenderer content={description} />
         ) : (
           <span style={{ fontSize: '13px', color: T.textDim, fontFamily: T.fontSans, fontStyle: 'italic' }}>No description</span>
+        )}
+      </div>
+        </div>
+
+        {/* Right column — parent chooser sidebar */}
+        {allBugs && (
+          <div style={{ width: 280, flexShrink: 0 }}>
+            <ParentChooser bug={bug} allBugs={allBugs} updateBug={updateBug} onBugUpdated={onBugUpdated} />
+          </div>
         )}
       </div>
     </div>
