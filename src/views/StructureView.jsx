@@ -90,7 +90,7 @@ function SearchDropdown({ results, onSelect }) {
 function TreeRow({
   node, depth, hasChildren, isCollapsed, isSelected, isHighlighted,
   isDragOver, isDragInvalid,
-  onToggle, onSelect, onDragStart, onDragOver, onDragLeave, onDrop,
+  onToggle, onSelect, onDoubleClick, onDragStart, onDragOver, onDragLeave, onDrop,
 }) {
   const indent = 20 + depth * 24;
   const [hover, setHover] = useState(false);
@@ -115,6 +115,7 @@ function TreeRow({
       onDragLeave={onDragLeave}
       onDrop={(e) => { e.preventDefault(); onDrop(node); }}
       onClick={() => onSelect(node)}
+      onDoubleClick={() => onDoubleClick(node)}
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
       style={{
@@ -176,7 +177,7 @@ function TreeRow({
 
 // ── Orphan Row (compact, for center pane) ────────────────────────────
 
-function OrphanRow({ node, isSelected, isHighlighted, onSelect, onDragStart }) {
+function OrphanRow({ node, isSelected, isHighlighted, onSelect, onDoubleClick, onDragStart }) {
   const [hover, setHover] = useState(false);
 
   let bg = 'transparent';
@@ -189,6 +190,7 @@ function OrphanRow({ node, isSelected, isHighlighted, onSelect, onDragStart }) {
       draggable
       onDragStart={(e) => { e.dataTransfer.setData('text/plain', node.id); onDragStart(node); }}
       onClick={() => onSelect(node)}
+      onDoubleClick={() => onDoubleClick(node)}
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
       style={{
@@ -216,7 +218,7 @@ function OrphanRow({ node, isSelected, isHighlighted, onSelect, onDragStart }) {
 
 // ── Unlinked Pane (center column) ────────────────────────────────────
 
-function UnlinkedPane({ orphanNodes, selectedId, highlightedId, onSelect, onDragStart, filterScope, setFilterScope }) {
+function UnlinkedPane({ orphanNodes, selectedId, highlightedId, onSelect, onDoubleClick, onDragStart, filterScope, setFilterScope }) {
   const scopes = useMemo(() => [...new Set(orphanNodes.map((n) => n.scope).filter(Boolean))], [orphanNodes]);
   const filtered = useMemo(() => {
     if (filterScope === 'all') return orphanNodes;
@@ -275,6 +277,7 @@ function UnlinkedPane({ orphanNodes, selectedId, highlightedId, onSelect, onDrag
             isSelected={selectedId === node.id}
             isHighlighted={highlightedId === node.id}
             onSelect={onSelect}
+            onDoubleClick={onDoubleClick}
             onDragStart={onDragStart}
           />
         ))}
@@ -481,7 +484,7 @@ function UnlinkZone({ isDragActive, onDrop }) {
 
 // ── Main StructureView ───────────────────────────────────────────────
 
-export default function StructureView({ allBugs, updateBug }) {
+export default function StructureView({ allBugs, updateBug, onSelect }) {
   const [collapsed, setCollapsed] = useState(loadCollapsed);
   const [selectedId, setSelectedId] = useState(loadSelected);
   const [orphanFilterScope, setOrphanFilterScope] = useState('all');
@@ -616,10 +619,7 @@ export default function StructureView({ allBugs, updateBug }) {
     setDropValid(null);
     setDragNode(null);
 
-    if (!v.valid) {
-      showToast(v.reason, 'error');
-      return;
-    }
+    if (!v.valid) return;
 
     try {
       await updateBug(dragNode.id, { parentNotionId: targetNode.id });
@@ -743,6 +743,7 @@ export default function StructureView({ allBugs, updateBug }) {
                 isDragInvalid={dropTarget === node.id && dropValid && !dropValid.valid}
                 onToggle={toggleCollapse}
                 onSelect={(n) => setSelectedId(n.id)}
+                onDoubleClick={onSelect}
                 onDragStart={handleDragStart}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
@@ -769,6 +770,7 @@ export default function StructureView({ allBugs, updateBug }) {
           selectedId={selectedId}
           highlightedId={highlightedId}
           onSelect={(n) => setSelectedId(n.id)}
+          onDoubleClick={onSelect}
           onDragStart={handleDragStart}
           filterScope={orphanFilterScope}
           setFilterScope={setOrphanFilterScope}

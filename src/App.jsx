@@ -196,7 +196,7 @@ export default function App() {
       {view === 'roadmap' && <RoadmapView bugs={bugs} allBugs={allBugs} meta={meta} onSelect={handleSelect} />}
       {view === 'unlinked' && <UnlinkedView bugs={bugs} allBugs={allBugs} meta={meta} onSelect={handleSelect} updateBug={updateBug} />}
       {view === 'graph' && <GraphView allBugs={allBugs} updateBug={updateBug} />}
-      {view === 'structure' && <StructureView allBugs={allBugs} updateBug={updateBug} />}
+      {view === 'structure' && <StructureView allBugs={allBugs} updateBug={updateBug} onSelect={handleSelect} />}
       <div style={{
         padding: '14px 32px', borderTop: `1px solid ${T.border}`,
         fontSize: '11px', color: T.textDim, fontFamily: T.fontSans,
