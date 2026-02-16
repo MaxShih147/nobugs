@@ -9,6 +9,7 @@ import SummaryView from './views/SummaryView';
 import KanbanView from './views/KanbanView';
 import MemberView from './views/MemberView';
 import ListView from './views/ListView';
+import SprintsView from './views/SprintsView';
 import RoadmapView from './views/RoadmapView';
 import UnlinkedView from './views/UnlinkedView';
 import GraphView from './views/GraphView';
@@ -94,7 +95,7 @@ function LoginPage({ onLogin }) {
 export default function App() {
   const [view, setViewState] = useState(() => {
     const hash = window.location.hash.slice(1);
-    const valid = ['summary', 'kanban', 'member', 'list', 'roadmap', 'unlinked', 'graph', 'structure', 'admin'];
+    const valid = ['summary', 'kanban', 'member', 'list', 'sprints', 'roadmap', 'unlinked', 'graph', 'structure', 'admin'];
     return valid.includes(hash) ? hash : 'summary';
   });
   const setView = (v) => {
@@ -193,7 +194,8 @@ export default function App() {
       {view === 'kanban' && <KanbanView bugs={bugs} meta={meta} onSelect={handleSelect} />}
       {view === 'member' && <MemberView bugs={bugs} meta={meta} onSelect={handleSelect} />}
       {view === 'list' && <ListView bugs={bugs} meta={meta} onSelect={handleSelect} />}
-      {view === 'roadmap' && <RoadmapView bugs={bugs} allBugs={allBugs} meta={meta} onSelect={handleSelect} />}
+      {view === 'sprints' && <SprintsView bugs={bugs} allBugs={allBugs} meta={meta} onSelect={handleSelect} />}
+      {view === 'roadmap' && <RoadmapView allBugs={allBugs} meta={meta} onSelect={handleSelect} />}
       {view === 'unlinked' && <UnlinkedView bugs={bugs} allBugs={allBugs} meta={meta} onSelect={handleSelect} updateBug={updateBug} />}
       {view === 'graph' && <GraphView allBugs={allBugs} updateBug={updateBug} />}
       {view === 'structure' && <StructureView allBugs={allBugs} updateBug={updateBug} onSelect={handleSelect} />}

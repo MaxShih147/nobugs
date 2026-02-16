@@ -7,6 +7,7 @@ const VIEWS = [
   { id: 'kanban', label: 'Kanban' },
   { id: 'member', label: 'Members' },
   { id: 'list', label: 'List' },
+  { id: 'sprints', label: 'Sprints' },
   { id: 'roadmap', label: 'Roadmap' },
   { id: 'unlinked', label: 'Unlinked' },
   { id: 'graph', label: 'Graph' },

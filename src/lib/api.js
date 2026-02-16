@@ -1,4 +1,4 @@
-import { generateMockBugs, MOCK_MEMBERS, MOCK_PROJECTS, MOCK_SPRINTS, MOCK_TAGS } from './mockData';
+import { generateMockBugs, getMockRoadmaps, MOCK_MEMBERS, MOCK_PROJECTS, MOCK_SPRINTS, MOCK_TAGS } from './mockData';
 
 const USE_MOCK = import.meta.env.VITE_DATA_SOURCE !== 'notion';
 const API_BASE = '/api';
@@ -114,6 +114,65 @@ export async function saveMembers(mappings, discoveredNames) {
     body: JSON.stringify({ mappings, discoveredNames }),
   });
   if (!res.ok) throw new Error(`Failed to save members: ${res.statusText}`);
+  return res.json();
+}
+
+// --- Roadmap CRUD ---
+
+export async function fetchRoadmaps() {
+  if (USE_MOCK) return getMockRoadmaps();
+  const res = await authFetch(`${API_BASE}/roadmaps`);
+  if (!res.ok) throw new Error(`Failed to fetch roadmaps: ${res.statusText}`);
+  return res.json();
+}
+
+export async function createRoadmapApi(data) {
+  if (USE_MOCK) return { id: `r-mock${Date.now()}`, name: data.name || 'Untitled', description: data.description || '', milestones: [] };
+  const res = await authFetch(`${API_BASE}/roadmaps`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error(`Failed to create roadmap: ${res.statusText}`);
+  return res.json();
+}
+
+export async function updateRoadmapApi(id, updates) {
+  if (USE_MOCK) return { id, ...updates };
+  const res = await authFetch(`${API_BASE}/roadmaps/${id}`, {
+    method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(updates),
+  });
+  if (!res.ok) throw new Error(`Failed to update roadmap: ${res.statusText}`);
+  return res.json();
+}
+
+export async function deleteRoadmapApi(id) {
+  if (USE_MOCK) return { ok: true };
+  const res = await authFetch(`${API_BASE}/roadmaps/${id}`, { method: 'DELETE' });
+  if (!res.ok) throw new Error(`Failed to delete roadmap: ${res.statusText}`);
+  return res.json();
+}
+
+export async function createMilestoneApi(roadmapId, data) {
+  if (USE_MOCK) return { id: `m-mock${Date.now()}`, name: data.name || 'Untitled', description: data.description || '', targetDate: data.targetDate || null, epicIds: [] };
+  const res = await authFetch(`${API_BASE}/roadmaps/${roadmapId}/milestones`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error(`Failed to create milestone: ${res.statusText}`);
+  return res.json();
+}
+
+export async function updateMilestoneApi(roadmapId, milestoneId, updates) {
+  if (USE_MOCK) return { id: milestoneId, ...updates };
+  const res = await authFetch(`${API_BASE}/roadmaps/${roadmapId}/milestones/${milestoneId}`, {
+    method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(updates),
+  });
+  if (!res.ok) throw new Error(`Failed to update milestone: ${res.statusText}`);
+  return res.json();
+}
+
+export async function deleteMilestoneApi(roadmapId, milestoneId) {
+  if (USE_MOCK) return { ok: true };
+  const res = await authFetch(`${API_BASE}/roadmaps/${roadmapId}/milestones/${milestoneId}`, { method: 'DELETE' });
+  if (!res.ok) throw new Error(`Failed to delete milestone: ${res.statusText}`);
   return res.json();
 }
 

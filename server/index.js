@@ -5,6 +5,7 @@ import cookieParser from 'cookie-parser';
 import { getAllBugs, getBug, updateBugInNotion, createBugInNotion, getMeta, updatePageDescription } from './notion.js';
 import { createAuthRouter, requireAuth, requireAdmin, isAuthEnabled } from './auth.js';
 import { getMemberMappings, saveMemberMappings, cacheDiscoveredNames, getDiscoveredNames } from './members.js';
+import { getRoadmaps, createRoadmap, updateRoadmap, deleteRoadmap, createMilestone, updateMilestone, deleteMilestone } from './roadmaps.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -82,6 +83,42 @@ app.put('/api/members', requireAdmin, (req, res) => {
     const result = saveMemberMappings(mappings, req.user?.email || 'unknown', discoveredNames);
     res.json(result);
   } catch (err) { console.error('Failed to save members:', err.message); res.status(500).json({ error: err.message }); }
+});
+
+// Roadmap CRUD
+app.get('/api/roadmaps', (req, res) => {
+  try { res.json(getRoadmaps()); }
+  catch (err) { console.error('Failed to fetch roadmaps:', err.message); res.status(500).json({ error: err.message }); }
+});
+
+app.post('/api/roadmaps', (req, res) => {
+  try { res.status(201).json(createRoadmap(req.body)); }
+  catch (err) { console.error('Failed to create roadmap:', err.message); res.status(500).json({ error: err.message }); }
+});
+
+app.patch('/api/roadmaps/:id', (req, res) => {
+  try { res.json(updateRoadmap(req.params.id, req.body)); }
+  catch (err) { console.error('Failed to update roadmap:', err.message); res.status(500).json({ error: err.message }); }
+});
+
+app.delete('/api/roadmaps/:id', (req, res) => {
+  try { deleteRoadmap(req.params.id); res.json({ ok: true }); }
+  catch (err) { console.error('Failed to delete roadmap:', err.message); res.status(500).json({ error: err.message }); }
+});
+
+app.post('/api/roadmaps/:id/milestones', (req, res) => {
+  try { res.status(201).json(createMilestone(req.params.id, req.body)); }
+  catch (err) { console.error('Failed to create milestone:', err.message); res.status(500).json({ error: err.message }); }
+});
+
+app.patch('/api/roadmaps/:roadmapId/milestones/:milestoneId', (req, res) => {
+  try { res.json(updateMilestone(req.params.roadmapId, req.params.milestoneId, req.body)); }
+  catch (err) { console.error('Failed to update milestone:', err.message); res.status(500).json({ error: err.message }); }
+});
+
+app.delete('/api/roadmaps/:roadmapId/milestones/:milestoneId', (req, res) => {
+  try { deleteMilestone(req.params.roadmapId, req.params.milestoneId); res.json({ ok: true }); }
+  catch (err) { console.error('Failed to delete milestone:', err.message); res.status(500).json({ error: err.message }); }
 });
 
 app.listen(PORT, () => {

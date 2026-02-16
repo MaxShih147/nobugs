@@ -135,3 +135,52 @@ export function generateMockBugs() {
 
   return bugs;
 }
+
+export function getMockRoadmaps() {
+  const bugs = generateMockBugs();
+  const epics = bugs.filter((b) => b.scope === 'epic');
+
+  // Assign ~60% of epics across milestones
+  const rand = seededRandom(77);
+  const assigned = [];
+  const unassigned = [];
+  epics.forEach((e) => {
+    if (rand() < 0.6) assigned.push(e.id);
+    else unassigned.push(e.id);
+  });
+
+  // Split assigned epics across milestones
+  const chunk = (arr, n) => {
+    const result = [];
+    const size = Math.ceil(arr.length / n);
+    for (let i = 0; i < n; i++) result.push(arr.slice(i * size, (i + 1) * size));
+    return result;
+  };
+
+  const q1Epics = chunk(assigned, 7); // 7 milestones total, 3-4 per roadmap
+  const q2Epics = chunk(unassigned.length > 0 ? unassigned : [], 3);
+
+  return [
+    {
+      id: 'r-mock0001',
+      name: 'Q1 2026',
+      description: 'Q1 goals and milestone planning',
+      milestones: [
+        { id: 'm-mock0001', name: 'Beta Release', description: 'Ship beta to early users', targetDate: '2026-03-01', epicIds: q1Epics[0] || [] },
+        { id: 'm-mock0002', name: 'Auth Overhaul', description: 'Migrate to new auth system', targetDate: '2026-02-15', epicIds: q1Epics[1] || [] },
+        { id: 'm-mock0003', name: 'Performance Sprint', description: 'Sub-second page loads', targetDate: '2026-03-15', epicIds: q1Epics[2] || [] },
+        { id: 'm-mock0004', name: 'Mobile Launch', description: 'iOS and Android apps in stores', targetDate: '2026-03-31', epicIds: q1Epics[3] || [] },
+      ],
+    },
+    {
+      id: 'r-mock0002',
+      name: 'Q2 2026',
+      description: 'Q2 goals and milestone planning',
+      milestones: [
+        { id: 'm-mock0005', name: 'GA Release', description: 'General availability launch', targetDate: '2026-04-15', epicIds: q2Epics[0] || [] },
+        { id: 'm-mock0006', name: 'Analytics V2', description: 'New analytics dashboard', targetDate: '2026-05-01', epicIds: q2Epics[1] || [] },
+        { id: 'm-mock0007', name: 'Enterprise Features', description: 'SSO, audit logs, RBAC', targetDate: '2026-06-15', epicIds: q2Epics[2] || [] },
+      ],
+    },
+  ];
+}
