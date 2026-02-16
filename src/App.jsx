@@ -193,7 +193,7 @@ export default function App() {
       {view === 'kanban' && <KanbanView bugs={bugs} meta={meta} onSelect={handleSelect} />}
       {view === 'member' && <MemberView bugs={bugs} meta={meta} onSelect={handleSelect} />}
       {view === 'list' && <ListView bugs={bugs} meta={meta} onSelect={handleSelect} />}
-      {view === 'roadmap' && <RoadmapView bugs={bugs} meta={meta} onSelect={handleSelect} />}
+      {view === 'roadmap' && <RoadmapView bugs={bugs} allBugs={allBugs} meta={meta} onSelect={handleSelect} />}
       {view === 'unlinked' && <UnlinkedView bugs={bugs} allBugs={allBugs} meta={meta} onSelect={handleSelect} updateBug={updateBug} />}
       {view === 'graph' && <GraphView allBugs={allBugs} updateBug={updateBug} />}
       {view === 'structure' && <StructureView allBugs={allBugs} updateBug={updateBug} />}
