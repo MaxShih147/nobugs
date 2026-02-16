@@ -719,7 +719,7 @@ export default function BugDetail({ bug, onBack, updateBug, meta, onBugUpdated, 
           <EditableInput
             value={bug.points}
             type="number"
-            placeholder="\u2014"
+            placeholder=""
             onSave={(v) => handleFieldSave('points', v)}
           />
         </div>
