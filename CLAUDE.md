@@ -38,11 +38,11 @@ nobugs/
 │   ├── App.jsx              # Root component, view routing
 │   └── main.jsx             # React entry point
 ├── server/
-│   ├── index.js             # Express API server (port 3001)
+│   ├── index.js             # Express API server (port 4993)
 │   └── notion.js            # Notion SDK client, property mapping, CRUD
 ├── docker/
 │   └── serve-static.js      # Production server (API + static files)
-├── vite.config.js           # Vite config, dev proxy /api -> :3001
+├── vite.config.js           # Vite config, dev proxy /api -> :4993
 ├── package.json
 ├── Dockerfile
 ├── docker-compose.yml
@@ -80,8 +80,8 @@ App.jsx
 
 ```bash
 npm install          # Install dependencies
-npm run dev          # Vite dev server on :3000 (mock data)
-npm run server       # Express API on :3001 (for Notion mode)
+npm run dev          # Vite dev server on :4973 (mock data)
+npm run server       # Express API on :4993 (for Notion mode)
 npm run build        # Production build to /dist
 ```
 
@@ -102,17 +102,31 @@ npm run build        # Production build to /dist
 
 - **Do not commit or push** after making changes — the user will test FE+BE manually first, and handle commit/push themselves after verifying
 - **For FE+BE testing** — ALWAYS start both servers before opening the browser. This project uses `VITE_DATA_SOURCE=notion` so the Express API server is required:
-  1. Kill any existing processes on ports 3000/3001: `lsof -ti:3000,3001 | xargs kill 2>/dev/null`
-  2. Start the API server: `npm run server` (port 3001)
-  3. Start the dev server: `npm run dev` (port 3000)
-  4. Verify both are up: `curl -s -o /dev/null -w "%{http_code}" http://localhost:3001/api/health` and `curl -s -o /dev/null -w "%{http_code}" http://localhost:3000`
-  5. Open browser: `open http://localhost:3000`
+  1. Kill any existing processes on ports 4973/4993: `lsof -ti:4973,4993 | xargs kill 2>/dev/null`
+  2. Start the API server: `npm run server` (port 4993)
+  3. Start the dev server: `npm run dev` (port 4973)
+  4. Verify both are up: `curl -s -o /dev/null -w "%{http_code}" http://localhost:4993/api/health` and `curl -s -o /dev/null -w "%{http_code}" http://localhost:4973`
+  5. Open browser: `open http://localhost:4973`
 - **When the user says something correlating to "pass"** (e.g. "pass", "looks good", "it works", "approved"), ask them if they want to commit and push
 - **When the user says "add a rule"**, add the rule to this CLAUDE.md file
 
 ## Naming
 
 - **Page body / description** — refers to Notion block content (the page body text), not a database property field. It is fetched and saved separately from bug properties.
+
+## Ports
+
+Both ports are prime numbers, chosen to avoid conflicts with common dev tools.
+
+- **Frontend (Vite):** `4973` — `strictPort: true`, will fail if port is taken
+- **Backend (Express):** `4993`
+- Do NOT change these ports — the Cloudflare Tunnel is configured to point to `localhost:4973`
+
+## Deployment
+
+- **Domain:** `nobugs.max-the-solution.com`
+- **Tunnel:** Cloudflare Tunnel → `http://localhost:4973`
+- Cloudflare handles HTTPS automatically; local servers run HTTP
 
 ## TODO
 

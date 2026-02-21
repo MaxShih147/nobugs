@@ -8,7 +8,7 @@ import { getMemberMappings, saveMemberMappings, cacheDiscoveredNames, getDiscove
 import { getRoadmaps, createRoadmap, updateRoadmap, deleteRoadmap, createMilestone, updateMilestone, deleteMilestone } from './roadmaps.js';
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 4993;
 
 app.use(cors());
 app.use(express.json());
