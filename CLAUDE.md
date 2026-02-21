@@ -127,6 +127,17 @@ Both ports are prime numbers, chosen to avoid conflicts with common dev tools.
 - **Domain:** `nobugs.max-the-solution.com`
 - **Tunnel:** Cloudflare Tunnel → `http://localhost:4973`
 - Cloudflare handles HTTPS automatically; local servers run HTTP
+- **Process manager:** pm2 manages all 3 services (`nobugs-api`, `nobugs-fe`, `nobugs-tunnel`)
+- **Auto-start:** pm2 is registered with launchd — all services start on reboot
+- **pm2 commands:** `pm2 status`, `pm2 logs`, `pm2 restart all`, `pm2 stop all`
+- **Config:** `ecosystem.config.cjs` defines all 3 processes
+
+## Security
+
+- **CORS:** Restricted to `https://nobugs.max-the-solution.com` and `http://localhost:4973` only
+- **Auth:** Email allowlist + invite code, JWT sessions (httpOnly cookies)
+- **Network:** Cloudflare Tunnel — no open ports, device IP hidden, DDoS protection included
+- **SSL:** Handled by Cloudflare, local servers run HTTP
 
 ## TODO
 

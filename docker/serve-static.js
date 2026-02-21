@@ -12,7 +12,17 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
 const PORT = process.env.PORT || 4993;
 
-app.use(cors());
+const allowedOrigins = [
+  'https://nobugs.max-the-solution.com',
+  'http://localhost:4973',
+];
+app.use(cors({
+  origin: (origin, cb) => {
+    if (!origin || allowedOrigins.includes(origin)) return cb(null, true);
+    cb(new Error('Not allowed by CORS'));
+  },
+  credentials: true,
+}));
 app.use(express.json());
 app.use(cookieParser());
 

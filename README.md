@@ -47,7 +47,7 @@ All views support global filters (project, priority, status, search).
 └─────────────────┼────────────────────────────────┘
                   │
     ┌─────────────▼──────────────┐
-    │     Express API Server      │  port 3001
+    │     Express API Server      │  port 4993
     │  ┌──────────┐ ┌──────────┐ │
     │  │ auth.js   │ │ notion.js│ │
     │  │ (JWT,     │ │ (CRUD,   │ │
@@ -79,7 +79,7 @@ npm install
 npm run dev
 ```
 
-Open http://localhost:3000
+Open http://localhost:4973
 
 ## Connect to Notion
 
@@ -165,6 +165,56 @@ ALLOWED_EMAILS=alice@example.com,bob@example.com
 3. All `/api/*` routes are protected by `requireAuth` middleware
 4. On 401, the frontend redirects back to the login page
 
+## Deploy with Cloudflare Tunnel
+
+The recommended deployment runs on a local machine with Cloudflare Tunnel — no cloud server needed.
+
+### Prerequisites
+
+- Node.js 20+
+- `cloudflared` (`brew install cloudflared`)
+- `pm2` (`npm install -g pm2`)
+- A domain on Cloudflare
+
+### Setup
+
+1. Create a Cloudflare Tunnel in Zero Trust → Networks → Connectors
+2. Point the tunnel to `http://localhost:4973`
+3. Configure `.env` (see above)
+4. Start all services:
+
+```bash
+pm2 start ecosystem.config.cjs
+pm2 save
+```
+
+5. Enable auto-start on reboot:
+
+```bash
+pm2 startup
+# Run the sudo command it outputs
+```
+
+### What's included
+
+| Concern | Handled by |
+|---------|-----------|
+| HTTPS / SSL | Cloudflare (automatic) |
+| DDoS protection | Cloudflare (free tier) |
+| CORS | Express (locked to production domain) |
+| Auth | Email allowlist + invite code + JWT |
+| Process management | pm2 (auto-restart on crash) |
+| Boot recovery | pm2 + launchd (auto-start on reboot) |
+
+### pm2 Commands
+
+```bash
+pm2 status          # Check all services
+pm2 logs            # View live logs
+pm2 restart all     # Restart everything
+pm2 stop all        # Stop everything
+```
+
 ## Deploy with Docker
 
 ```bash
@@ -174,7 +224,7 @@ cp .env.example .env
 docker-compose up -d
 ```
 
-nobugs will be available at http://localhost:3001
+nobugs will be available at http://localhost:4993
 
 ## Notion Database Template
 
@@ -237,7 +287,7 @@ nobugs/
 - [ ] Add drag-and-drop to Kanban board
 - [ ] Bug comments / activity log
 - [ ] Email notifications for assigned bugs
-- [ ] Production deployment guide (AWS / Railway / Fly.io)
+- [x] Production deployment (Cloudflare Tunnel + pm2)
 - [ ] Dark/light theme toggle
 
 ## License
