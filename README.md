@@ -165,6 +165,13 @@ ALLOWED_EMAILS=alice@example.com,bob@example.com
 3. All `/api/*` routes are protected by `requireAuth` middleware
 4. On 401, the frontend redirects back to the login page
 
+### Security
+
+- **JWT cookies:** httpOnly, secure (HTTPS only), sameSite=lax, 8h expiry
+- **Rate limiting:** Login endpoint limited to 10 attempts per 15 minutes; API limited to 100 requests per minute
+- **CORS:** Locked to production domain only
+- **Proxy trust:** Enabled for Cloudflare Tunnel
+
 ## Deploy with Cloudflare Tunnel
 
 The recommended deployment runs on a local machine with Cloudflare Tunnel — no cloud server needed.

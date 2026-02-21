@@ -2,12 +2,14 @@ import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
+import rateLimit from 'express-rate-limit';
 import { getAllBugs, getBug, updateBugInNotion, createBugInNotion, getMeta, updatePageDescription } from './notion.js';
 import { createAuthRouter, requireAuth, requireAdmin, isAuthEnabled } from './auth.js';
 import { getMemberMappings, saveMemberMappings, cacheDiscoveredNames, getDiscoveredNames } from './members.js';
 import { getRoadmaps, createRoadmap, updateRoadmap, deleteRoadmap, createMilestone, updateMilestone, deleteMilestone } from './roadmaps.js';
 
 const app = express();
+app.set('trust proxy', 1); // Trust Cloudflare Tunnel proxy
 const PORT = process.env.PORT || 4993;
 
 const allowedOrigins = [
@@ -24,8 +26,20 @@ app.use(cors({
 app.use(express.json());
 app.use(cookieParser());
 
-// Auth routes (unprotected)
-app.use('/auth', createAuthRouter());
+// Rate limiting — strict on login, lighter on API
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10,                   // 10 login attempts per window
+  message: { error: 'Too many login attempts, try again in 15 minutes' },
+});
+const apiLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000,  // 1 minute
+  max: 100,                  // 100 API requests per minute
+  message: { error: 'Too many requests, slow down' },
+});
+
+// Auth routes (unprotected, rate-limited)
+app.use('/auth', authLimiter, createAuthRouter());
 
 // Health check (unprotected)
 app.get('/api/health', (req, res) => {
@@ -33,7 +47,7 @@ app.get('/api/health', (req, res) => {
 });
 
 // Protect all other API routes
-app.use('/api', requireAuth);
+app.use('/api', apiLimiter, requireAuth);
 
 app.get('/api/bugs', async (req, res) => {
   try {

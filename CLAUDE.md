@@ -136,6 +136,9 @@ Both ports are prime numbers, chosen to avoid conflicts with common dev tools.
 
 - **CORS:** Restricted to `https://nobugs.max-the-solution.com` and `http://localhost:4973` only
 - **Auth:** Email allowlist + invite code, JWT sessions (httpOnly cookies)
+- **JWT:** 8h expiry, httpOnly + secure + sameSite=lax cookies
+- **Rate limiting:** Login: 10 attempts per 15 min; API: 100 requests per min
+- **Proxy trust:** `trust proxy` enabled for Cloudflare Tunnel
 - **Network:** Cloudflare Tunnel — no open ports, device IP hidden, DDoS protection included
 - **SSL:** Handled by Cloudflare, local servers run HTTP
 
