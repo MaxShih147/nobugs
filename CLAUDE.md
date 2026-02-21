@@ -148,3 +148,6 @@ Both ports are prime numbers, chosen to avoid conflicts with common dev tools.
 - [ ] Remove OAuth integration from Notion (no longer used)
 - [x] Set up production deployment (Cloudflare Tunnel + pm2)
 - [ ] Add member email-to-name mapping for better display in Header
+- [ ] Session management: revoke/limit sessions
+- [ ] Per-user invite codes
+- [ ] Monitoring: login audit log, API request logging, per-user usage stats, admin dashboard for viewing logs
