@@ -109,6 +109,7 @@ npm run build        # Production build to /dist
   5. Open browser: `open http://localhost:4973`
 - **When the user says something correlating to "pass"** (e.g. "pass", "looks good", "it works", "approved"), ask them if they want to commit and push
 - **When the user says "add a rule"**, add the rule to this CLAUDE.md file
+- **Keep docs up to date** — whenever ports, deployment config, security settings, or architecture changes, update CLAUDE.md and README.md in the same commit
 
 ## Naming
 
@@ -118,16 +119,16 @@ npm run build        # Production build to /dist
 
 Both ports are prime numbers, chosen to avoid conflicts with common dev tools.
 
-- **Frontend (Vite):** `4973` — `strictPort: true`, will fail if port is taken
-- **Backend (Express):** `4993`
-- Do NOT change these ports — the Cloudflare Tunnel is configured to point to `localhost:4973`
+- **Dev frontend (Vite):** `4973` — `strictPort: true`, for local dev only
+- **Production server (Express):** `4993` — serves API + static frontend build
+- Do NOT change port 4993 — the Cloudflare Tunnel is configured to point to it
 
 ## Deployment
 
 - **Domain:** `nobugs.max-the-solution.com`
-- **Tunnel:** Cloudflare Tunnel → `http://localhost:4973`
+- **Tunnel:** Cloudflare Tunnel → `http://localhost:4993`
 - Cloudflare handles HTTPS automatically; local servers run HTTP
-- **Process manager:** pm2 manages all 3 services (`nobugs-api`, `nobugs-fe`, `nobugs-tunnel`)
+- **Process manager:** pm2 manages 2 services (`nobugs-api`, `nobugs-tunnel`)
 - **Auto-start:** pm2 is registered with launchd — all services start on reboot
 - **pm2 commands:** `pm2 status`, `pm2 logs`, `pm2 restart all`, `pm2 stop all`
 - **Config:** `ecosystem.config.cjs` defines all 3 processes
@@ -145,5 +146,5 @@ Both ports are prime numbers, chosen to avoid conflicts with common dev tools.
 ## TODO
 
 - [ ] Remove OAuth integration from Notion (no longer used)
-- [ ] Set up production deployment
+- [x] Set up production deployment (Cloudflare Tunnel + pm2)
 - [ ] Add member email-to-name mapping for better display in Header

@@ -186,7 +186,7 @@ The recommended deployment runs on a local machine with Cloudflare Tunnel — no
 ### Setup
 
 1. Create a Cloudflare Tunnel in Zero Trust → Networks → Connectors
-2. Point the tunnel to `http://localhost:4973`
+2. Point the tunnel to `http://localhost:4993`
 3. Configure `.env` (see above)
 4. Start all services:
 

@@ -3,6 +3,8 @@ import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import rateLimit from 'express-rate-limit';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 import { getAllBugs, getBug, updateBugInNotion, createBugInNotion, getMeta, updatePageDescription } from './notion.js';
 import { createAuthRouter, requireAuth, requireAdmin, isAuthEnabled } from './auth.js';
 import { getMemberMappings, saveMemberMappings, cacheDiscoveredNames, getDiscoveredNames } from './members.js';
@@ -145,8 +147,14 @@ app.delete('/api/roadmaps/:roadmapId/milestones/:milestoneId', (req, res) => {
   catch (err) { console.error('Failed to delete milestone:', err.message); res.status(500).json({ error: err.message }); }
 });
 
+// Production: serve static frontend build
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const distPath = join(__dirname, '..', 'dist');
+app.use(express.static(distPath));
+app.get('*', (req, res) => res.sendFile(join(distPath, 'index.html')));
+
 app.listen(PORT, () => {
-  console.log(`🛡️  nobugs API running on http://localhost:${PORT}`);
+  console.log(`🛡️  nobugs running on http://localhost:${PORT}`);
   console.log(`   Database ID: ${process.env.NOTION_DATABASE_ID?.slice(0, 8)}...`);
   console.log(`   Auth: ${isAuthEnabled() ? 'enabled (Notion OAuth)' : 'disabled (open access)'}`);
 });
