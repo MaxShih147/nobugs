@@ -10,8 +10,31 @@ function getMockBugs() {
   return mockBugs;
 }
 
-async function authFetch(url, options) {
-  const res = await fetch(url, options);
+// ─── Database ID (persisted in localStorage) ────────────────────────────────
+
+let currentDatabaseId = localStorage.getItem('nobugs_database_id') || '';
+
+export function getDatabaseId() {
+  return currentDatabaseId;
+}
+
+export function setDatabaseId(id) {
+  currentDatabaseId = id || '';
+  if (id) {
+    localStorage.setItem('nobugs_database_id', id);
+  } else {
+    localStorage.removeItem('nobugs_database_id');
+  }
+}
+
+// ─── Auth-aware fetch with database header ──────────────────────────────────
+
+async function authFetch(url, options = {}) {
+  const headers = { ...options.headers };
+  if (currentDatabaseId) {
+    headers['X-Database-ID'] = currentDatabaseId;
+  }
+  const res = await fetch(url, { ...options, headers });
   if (res.status === 401) {
     throw new Error('Not authenticated');
   }
@@ -114,6 +137,49 @@ export async function saveMembers(mappings, discoveredNames) {
     body: JSON.stringify({ mappings, discoveredNames }),
   });
   if (!res.ok) throw new Error(`Failed to save members: ${res.statusText}`);
+  return res.json();
+}
+
+// --- Database management ---
+
+export async function fetchDatabases() {
+  if (USE_MOCK) return { databases: [] };
+  const res = await authFetch(`${API_BASE}/databases`);
+  if (!res.ok) throw new Error(`Failed to fetch databases: ${res.statusText}`);
+  return res.json();
+}
+
+export async function addDatabase(data) {
+  const res = await authFetch(`${API_BASE}/databases`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error(`Failed to add database: ${res.statusText}`);
+  return res.json();
+}
+
+export async function updateDatabase(id, data) {
+  const res = await authFetch(`${API_BASE}/databases/${encodeURIComponent(id)}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error(`Failed to update database: ${res.statusText}`);
+  return res.json();
+}
+
+export async function removeDatabaseApi(id) {
+  const res = await authFetch(`${API_BASE}/databases/${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+  });
+  if (!res.ok) throw new Error(`Failed to delete database: ${res.statusText}`);
+  return res.json();
+}
+
+export async function fetchDatabaseProperties(dbId) {
+  const res = await authFetch(`${API_BASE}/databases/${encodeURIComponent(dbId)}/properties`);
+  if (!res.ok) throw new Error(`Failed to fetch database properties: ${res.statusText}`);
   return res.json();
 }
 

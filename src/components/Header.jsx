@@ -30,6 +30,33 @@ function Select({ value, onChange, options, placeholder, colorFn }) {
   );
 }
 
+function DatabaseSwitcher({ databases, currentDbId, onDatabaseChange }) {
+  if (!databases || databases.length <= 1) return null;
+  return (
+    <select
+      value={currentDbId || ''}
+      onChange={(e) => onDatabaseChange(e.target.value)}
+      style={{
+        background: 'rgba(139, 92, 246, 0.08)',
+        border: `1px solid rgba(139, 92, 246, 0.25)`,
+        borderRadius: T.radiusSm,
+        padding: '7px 12px',
+        color: T.accent,
+        fontSize: '12px',
+        fontWeight: 600,
+        fontFamily: T.fontSans,
+        outline: 'none',
+        cursor: 'pointer',
+        transition: `all 0.25s ${T.ease}`,
+      }}
+    >
+      {databases.map((db) => (
+        <option key={db.id} value={db.id}>{db.name}</option>
+      ))}
+    </select>
+  );
+}
+
 function UserMenu({ user }) {
   const displayName = user.memberName || user.name || user.email;
   return (
@@ -49,7 +76,7 @@ function UserMenu({ user }) {
   );
 }
 
-export default function Header({ view, onViewChange, filters, meta, user, unlinkedCount }) {
+export default function Header({ view, onViewChange, filters, meta, user, unlinkedCount, databases, currentDbId, onDatabaseChange }) {
   const views = user?.isAdmin
     ? [...VIEWS, { id: 'admin', label: 'Admin' }]
     : VIEWS;
@@ -68,6 +95,7 @@ export default function Header({ view, onViewChange, filters, meta, user, unlink
           background: `linear-gradient(135deg, #c4b5fd, ${T.accent})`,
           WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
         }}>nobugs</span>
+        <DatabaseSwitcher databases={databases} currentDbId={currentDbId} onDatabaseChange={onDatabaseChange} />
         <div style={{ height: 20, width: 1, background: T.border }} />
         <div style={{ display: 'flex', gap: 4 }}>
           {views.map((v) => (

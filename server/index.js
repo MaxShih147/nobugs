@@ -5,9 +5,10 @@ import cookieParser from 'cookie-parser';
 import rateLimit from 'express-rate-limit';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
-import { getAllBugs, getBug, updateBugInNotion, createBugInNotion, getMeta, updatePageDescription } from './notion.js';
+import { getAllBugs, getBug, updateBugInNotion, createBugInNotion, getMeta, updatePageDescription, fetchDatabaseProperties } from './notion.js';
 import { createAuthRouter, requireAuth, requireAdmin, isAuthEnabled } from './auth.js';
 import { getMemberMappings, saveMemberMappings, cacheDiscoveredNames, getDiscoveredNames } from './members.js';
+import { getDatabases, saveDatabase, deleteDatabase, getDatabasePropMap, DEFAULT_PROP_MAP } from './databases.js';
 import { getRoadmaps, createRoadmap, updateRoadmap, deleteRoadmap, createMilestone, updateMilestone, deleteMilestone } from './roadmaps.js';
 
 const app = express();
@@ -51,21 +52,73 @@ app.get('/api/health', (req, res) => {
 // Protect all other API routes
 app.use('/api', apiLimiter, requireAuth);
 
+// ─── Database context middleware ────────────────────────────────────────────
+// Extracts X-Database-ID header and loads the correct propMap for the request
+app.use('/api', (req, res, next) => {
+  const dbId = req.headers['x-database-id'] || process.env.NOTION_DATABASE_ID;
+  req.dbId = dbId;
+  req.propMap = getDatabasePropMap(dbId);
+  next();
+});
+
+// ─── Database management routes ─────────────────────────────────────────────
+
+app.get('/api/databases', (req, res) => {
+  try {
+    const databases = getDatabases();
+    res.json({ databases });
+  } catch (err) { console.error('Failed to fetch databases:', err.message); res.status(500).json({ error: err.message }); }
+});
+
+app.post('/api/databases', requireAdmin, async (req, res) => {
+  try {
+    const { id, name, propMap } = req.body;
+    if (!id) return res.status(400).json({ error: 'Database ID is required' });
+    if (!name) return res.status(400).json({ error: 'Database name is required' });
+    const entry = saveDatabase({ id, name, propMap: propMap || { ...DEFAULT_PROP_MAP } }, req.user?.email);
+    res.status(201).json(entry);
+  } catch (err) { console.error('Failed to add database:', err.message); res.status(500).json({ error: err.message }); }
+});
+
+app.put('/api/databases/:id', requireAdmin, (req, res) => {
+  try {
+    const { name, propMap } = req.body;
+    const entry = saveDatabase({ id: req.params.id, name, propMap }, req.user?.email);
+    res.json(entry);
+  } catch (err) { console.error('Failed to update database:', err.message); res.status(500).json({ error: err.message }); }
+});
+
+app.delete('/api/databases/:id', requireAdmin, (req, res) => {
+  try {
+    deleteDatabase(req.params.id);
+    res.json({ ok: true });
+  } catch (err) { console.error('Failed to delete database:', err.message); res.status(500).json({ error: err.message }); }
+});
+
+app.get('/api/databases/:id/properties', requireAdmin, async (req, res) => {
+  try {
+    const result = await fetchDatabaseProperties(req.params.id);
+    res.json(result);
+  } catch (err) { console.error('Failed to fetch database properties:', err.message); res.status(500).json({ error: err.message }); }
+});
+
+// ─── Bug routes (now use dynamic dbId + propMap) ────────────────────────────
+
 app.get('/api/bugs', async (req, res) => {
   try {
-    const bugs = await getAllBugs();
+    const bugs = await getAllBugs(req.dbId, req.propMap);
     cacheDiscoveredNames(bugs);
     res.json({ bugs });
   } catch (err) { console.error('Failed to fetch bugs:', err.message); res.status(500).json({ error: err.message }); }
 });
 
 app.get('/api/bugs/:id', async (req, res) => {
-  try { res.json(await getBug(req.params.id)); }
+  try { res.json(await getBug(req.params.id, req.propMap)); }
   catch (err) { console.error('Failed to fetch bug:', err.message); res.status(500).json({ error: err.message }); }
 });
 
 app.patch('/api/bugs/:id', async (req, res) => {
-  try { res.json(await updateBugInNotion(req.params.id, req.body)); }
+  try { res.json(await updateBugInNotion(req.params.id, req.body, req.propMap)); }
   catch (err) { console.error('Failed to update bug:', err.message); res.status(500).json({ error: err.message }); }
 });
 
@@ -77,13 +130,13 @@ app.put('/api/bugs/:id/description', async (req, res) => {
 });
 
 app.post('/api/bugs', async (req, res) => {
-  try { res.status(201).json(await createBugInNotion(req.body)); }
+  try { res.status(201).json(await createBugInNotion(req.dbId, req.propMap, req.body)); }
   catch (err) { console.error('Failed to create bug:', err.message); res.status(500).json({ error: err.message }); }
 });
 
 app.get('/api/meta', async (req, res) => {
   try {
-    const meta = await getMeta();
+    const meta = await getMeta(req.dbId, req.propMap);
     // Include members from mappings + discovered names
     const { mappings } = getMemberMappings();
     const discovered = getDiscoveredNames();

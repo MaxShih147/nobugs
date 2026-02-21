@@ -1,23 +1,9 @@
 import { Client } from '@notionhq/client';
 
 const notion = new Client({ auth: process.env.NOTION_API_KEY });
-const databaseId = process.env.NOTION_DATABASE_ID;
 
-// ─── Property name mapping ──────────────────────────────────────────────────
-// Customized to match the "Product Backlog - Test for NoBugs" database.
-const PROP_MAP = {
-  title: 'Item',
-  status: 'Status',       // multi_select
-  priority: 'Priority',   // select
-  assignee: 'Engineers',   // people
-  sprint: 'Sprint',       // multi_select
-  due: 'Due',             // date
-  type: 'Type',           // select: Bug, Improve, Feature
-  scope: 'Scope',         // select: Epic, Story, Task
-  size: 'Size',           // select: XL, L, M, S
-  points: 'Points',       // number
-  parent: 'Parent item',  // relation (single, enforced as 0 or 1)
-};
+// Default database ID from .env (used as fallback)
+const defaultDatabaseId = process.env.NOTION_DATABASE_ID;
 
 // ─── Property extractors ────────────────────────────────────────────────────
 
@@ -66,29 +52,30 @@ function extractRelation(prop) {
 
 // ─── Notion page → nobugs bug object ───────────────────────────────────────
 
-function mapPageToBug(page) {
+function mapPageToBug(page, propMap) {
   const p = page.properties;
   return {
     id: `NB-${page.id.replace(/-/g, '').slice(-6).toUpperCase()}`,
     notionId: page.id,
-    title: extractTitle(p[PROP_MAP.title]),
-    status: extractFirstMultiSelect(p[PROP_MAP.status]) || 'To do',
-    priority: extractSelect(p[PROP_MAP.priority]) || 'P4',
-    assignee: extractPerson(p[PROP_MAP.assignee]) || 'Unassigned',
-    type: extractSelect(p[PROP_MAP.type]) || '',
-    scope: extractSelect(p[PROP_MAP.scope]) || '',
-    size: extractSelect(p[PROP_MAP.size]) || '',
-    points: extractNumber(p[PROP_MAP.points]),
-    sprint: extractFirstMultiSelect(p[PROP_MAP.sprint]) || '',
-    due: extractDate(p[PROP_MAP.due]),
+    title: extractTitle(p[propMap.title]),
+    status: extractFirstMultiSelect(p[propMap.status]) || extractSelect(p[propMap.status]) || 'To do',
+    priority: extractSelect(p[propMap.priority]) || 'P4',
+    assignee: extractPerson(p[propMap.assignee]) || 'Unassigned',
+    type: extractSelect(p[propMap.type]) || '',
+    scope: extractSelect(p[propMap.scope]) || '',
+    size: extractSelect(p[propMap.size]) || '',
+    points: extractNumber(p[propMap.points]),
+    sprint: extractFirstMultiSelect(p[propMap.sprint]) || extractSelect(p[propMap.sprint]) || '',
+    due: extractDate(p[propMap.due]),
     created: page.created_time.slice(0, 10),
-    parentNotionId: extractRelation(p[PROP_MAP.parent]),
+    parentNotionId: extractRelation(p[propMap.parent]),
   };
 }
 
 // ─── CRUD operations ────────────────────────────────────────────────────────
 
-export async function getAllBugs() {
+export async function getAllBugs(dbId, propMap) {
+  const databaseId = dbId || defaultDatabaseId;
   const results = [];
   let cursor = undefined;
   do {
@@ -100,7 +87,7 @@ export async function getAllBugs() {
     results.push(...response.results);
     cursor = response.has_more ? response.next_cursor : undefined;
   } while (cursor);
-  return results.map(mapPageToBug);
+  return results.map((page) => mapPageToBug(page, propMap));
 }
 
 function blockToText(block, depth) {
@@ -155,49 +142,50 @@ async function fetchPageDescription(pageId) {
   } catch { return ''; }
 }
 
-export async function getBug(pageId) {
+export async function getBug(pageId, propMap) {
   const page = await notion.pages.retrieve({ page_id: pageId });
-  const bug = mapPageToBug(page);
+  const bug = mapPageToBug(page, propMap);
   bug.description = await fetchPageDescription(pageId);
   return bug;
 }
 
-export async function updateBugInNotion(pageId, updates) {
+export async function updateBugInNotion(pageId, updates, propMap) {
   const properties = {};
-  if (updates.status) properties[PROP_MAP.status] = { multi_select: [{ name: updates.status }] };
-  if (updates.priority) properties[PROP_MAP.priority] = { select: { name: updates.priority } };
-  if (updates.type) properties[PROP_MAP.type] = { select: { name: updates.type } };
-  if (updates.scope) properties[PROP_MAP.scope] = { select: { name: updates.scope } };
-  if (updates.size) properties[PROP_MAP.size] = { select: { name: updates.size } };
-  if (updates.sprint) properties[PROP_MAP.sprint] = { multi_select: [{ name: updates.sprint }] };
-  if (updates.points !== undefined) properties[PROP_MAP.points] = { number: updates.points };
+  if (updates.status) properties[propMap.status] = { multi_select: [{ name: updates.status }] };
+  if (updates.priority) properties[propMap.priority] = { select: { name: updates.priority } };
+  if (updates.type) properties[propMap.type] = { select: { name: updates.type } };
+  if (updates.scope) properties[propMap.scope] = { select: { name: updates.scope } };
+  if (updates.size) properties[propMap.size] = { select: { name: updates.size } };
+  if (updates.sprint) properties[propMap.sprint] = { multi_select: [{ name: updates.sprint }] };
+  if (updates.points !== undefined) properties[propMap.points] = { number: updates.points };
   if (updates.due !== undefined) {
-    properties[PROP_MAP.due] = updates.due ? { date: { start: updates.due } } : { date: null };
+    properties[propMap.due] = updates.due ? { date: { start: updates.due } } : { date: null };
   }
   if (updates.title) {
-    properties[PROP_MAP.title] = { title: [{ text: { content: updates.title } }] };
+    properties[propMap.title] = { title: [{ text: { content: updates.title } }] };
   }
   if (updates.parentNotionId !== undefined) {
-    properties[PROP_MAP.parent] = updates.parentNotionId
+    properties[propMap.parent] = updates.parentNotionId
       ? { relation: [{ id: updates.parentNotionId }] }
       : { relation: [] };
   }
   const page = await notion.pages.update({ page_id: pageId, properties });
-  return mapPageToBug(page);
+  return mapPageToBug(page, propMap);
 }
 
-export async function createBugInNotion(bugData) {
+export async function createBugInNotion(dbId, propMap, bugData) {
+  const databaseId = dbId || defaultDatabaseId;
   const properties = {
-    [PROP_MAP.title]: { title: [{ text: { content: bugData.title } }] },
+    [propMap.title]: { title: [{ text: { content: bugData.title } }] },
   };
-  if (bugData.status) properties[PROP_MAP.status] = { multi_select: [{ name: bugData.status }] };
-  if (bugData.priority) properties[PROP_MAP.priority] = { select: { name: bugData.priority } };
-  if (bugData.type) properties[PROP_MAP.type] = { select: { name: bugData.type } };
-  if (bugData.scope) properties[PROP_MAP.scope] = { select: { name: bugData.scope } };
-  if (bugData.size) properties[PROP_MAP.size] = { select: { name: bugData.size } };
-  if (bugData.sprint) properties[PROP_MAP.sprint] = { multi_select: [{ name: bugData.sprint }] };
-  if (bugData.points !== undefined && bugData.points !== null) properties[PROP_MAP.points] = { number: bugData.points };
-  if (bugData.due) properties[PROP_MAP.due] = { date: { start: bugData.due } };
+  if (bugData.status) properties[propMap.status] = { multi_select: [{ name: bugData.status }] };
+  if (bugData.priority) properties[propMap.priority] = { select: { name: bugData.priority } };
+  if (bugData.type) properties[propMap.type] = { select: { name: bugData.type } };
+  if (bugData.scope) properties[propMap.scope] = { select: { name: bugData.scope } };
+  if (bugData.size) properties[propMap.size] = { select: { name: bugData.size } };
+  if (bugData.sprint) properties[propMap.sprint] = { multi_select: [{ name: bugData.sprint }] };
+  if (bugData.points !== undefined && bugData.points !== null) properties[propMap.points] = { number: bugData.points };
+  if (bugData.due) properties[propMap.due] = { date: { start: bugData.due } };
 
   const createOpts = { parent: { database_id: databaseId }, properties };
 
@@ -212,7 +200,7 @@ export async function createBugInNotion(bugData) {
   }
 
   const page = await notion.pages.create(createOpts);
-  const bug = mapPageToBug(page);
+  const bug = mapPageToBug(page, propMap);
   bug.description = bugData.description || '';
   return bug;
 }
@@ -247,7 +235,8 @@ export async function updatePageDescription(pageId, text) {
   }
 }
 
-export async function getMeta() {
+export async function getMeta(dbId, propMap) {
+  const databaseId = dbId || defaultDatabaseId;
   const db = await notion.databases.retrieve({ database_id: databaseId });
   const props = db.properties;
   const getOpts = (name) => {
@@ -259,11 +248,22 @@ export async function getMeta() {
     return [];
   };
   return {
-    statuses: getOpts(PROP_MAP.status),
-    priorities: getOpts(PROP_MAP.priority),
-    types: getOpts(PROP_MAP.type),
-    scopes: getOpts(PROP_MAP.scope),
-    sizes: getOpts(PROP_MAP.size),
-    sprints: getOpts(PROP_MAP.sprint),
+    statuses: getOpts(propMap.status),
+    priorities: getOpts(propMap.priority),
+    types: getOpts(propMap.type),
+    scopes: getOpts(propMap.scope),
+    sizes: getOpts(propMap.size),
+    sprints: getOpts(propMap.sprint),
   };
+}
+
+export async function fetchDatabaseProperties(dbId) {
+  const databaseId = dbId || defaultDatabaseId;
+  const db = await notion.databases.retrieve({ database_id: databaseId });
+  // Return property names with their types
+  const properties = {};
+  for (const [name, prop] of Object.entries(db.properties)) {
+    properties[name] = { type: prop.type, name };
+  }
+  return { title: db.title.map((t) => t.plain_text).join(''), properties };
 }

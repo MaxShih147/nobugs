@@ -104,7 +104,7 @@ export default function App() {
   };
   const [detailBug, setDetailBug] = useState(null);
   const [authState, setAuthState] = useState({ loading: true, authEnabled: false, authenticated: false, user: null });
-  const { bugs, allBugs, meta, loading, error, filters, updateBug, createBug, reload } = useBugs();
+  const { bugs, allBugs, meta, loading, error, filters, updateBug, createBug, reload, databases, currentDbId, switchDatabase, reloadDatabases } = useBugs();
   const unlinkedCount = allBugs.filter((b) => !b.parentNotionId).length;
 
   const handleSelect = (bug) => setDetailBug(bug);
@@ -187,9 +187,9 @@ export default function App() {
 
   return (
     <div style={{ minHeight: '100vh', background: T.bg }}>
-      <Header view={view} onViewChange={setView} filters={filters} meta={meta} user={authState.user} unlinkedCount={unlinkedCount} />
+      <Header view={view} onViewChange={setView} filters={filters} meta={meta} user={authState.user} unlinkedCount={unlinkedCount} databases={databases} currentDbId={currentDbId} onDatabaseChange={switchDatabase} />
       <QuickCreate meta={meta} createBug={createBug} />
-      {view === 'admin' && authState.user?.isAdmin && <AdminView user={authState.user} />}
+      {view === 'admin' && authState.user?.isAdmin && <AdminView user={authState.user} onDatabasesChanged={reloadDatabases} />}
       {view === 'summary' && <SummaryView bugs={bugs} allBugs={allBugs} meta={meta} onSelect={handleSelect} />}
       {view === 'kanban' && <KanbanView bugs={bugs} meta={meta} onSelect={handleSelect} />}
       {view === 'member' && <MemberView bugs={bugs} meta={meta} onSelect={handleSelect} />}

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { fetchBugs, fetchMeta, updateBug, createBug } from '../lib/api';
+import { fetchBugs, fetchMeta, updateBug, createBug, fetchDatabases, getDatabaseId, setDatabaseId } from '../lib/api';
 
 export function useBugs() {
   const [bugs, setBugs] = useState([]);
@@ -7,11 +7,28 @@ export function useBugs() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const [databases, setDatabases] = useState([]);
+  const [currentDbId, setCurrentDbId] = useState(getDatabaseId);
+
   const [filterProject, setFilterProject] = useState('All');
   const [filterPriority, setFilterPriority] = useState('All');
   const [filterMember, setFilterMember] = useState('All');
   const [filterStatus, setFilterStatus] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
+
+  const loadDatabases = useCallback(async () => {
+    try {
+      const { databases: dbs } = await fetchDatabases();
+      setDatabases(dbs || []);
+      // If no database selected yet but databases exist, select the first one
+      if (!getDatabaseId() && dbs?.length > 0) {
+        setDatabaseId(dbs[0].id);
+        setCurrentDbId(dbs[0].id);
+      }
+    } catch {
+      // Non-critical — databases list just won't show
+    }
+  }, []);
 
   const load = useCallback(async () => {
     try {
@@ -27,7 +44,30 @@ export function useBugs() {
     }
   }, []);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    loadDatabases().then(() => load());
+  }, [loadDatabases, load]);
+
+  const switchDatabase = useCallback((dbId) => {
+    setDatabaseId(dbId);
+    setCurrentDbId(dbId);
+    // Reset filters on switch
+    setFilterProject('All');
+    setFilterPriority('All');
+    setFilterMember('All');
+    setFilterStatus('All');
+    setSearchQuery('');
+  }, []);
+
+  // Reload bugs whenever currentDbId changes (after initial load)
+  const [initialLoadDone, setInitialLoadDone] = useState(false);
+  useEffect(() => {
+    if (!initialLoadDone) {
+      setInitialLoadDone(true);
+      return;
+    }
+    load();
+  }, [currentDbId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const filteredBugs = useMemo(() => {
     return bugs.filter((b) => {
@@ -63,6 +103,7 @@ export function useBugs() {
   return {
     bugs: filteredBugs, allBugs: bugs, meta, loading, error,
     reload: load, updateBug: handleUpdate, createBug: handleCreate,
+    databases, currentDbId, switchDatabase, reloadDatabases: loadDatabases,
     filters: {
       project: filterProject, priority: filterPriority, member: filterMember,
       status: filterStatus, search: searchQuery,
