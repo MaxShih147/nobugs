@@ -108,6 +108,7 @@ npm run build        # Production build to /dist
   4. Verify both are up: `curl -s -o /dev/null -w "%{http_code}" http://localhost:4993/api/health` and `curl -s -o /dev/null -w "%{http_code}" http://localhost:4973`
   5. Open browser: `open http://localhost:4973`
 - **When the user says something correlating to "pass"** (e.g. "pass", "looks good", "it works", "approved"), ask them if they want to commit and push
+- **When the user says "cnp"** — commit and push (shorthand for "commit and push"). Stage the changed files, create a commit with a descriptive message, and push to the remote
 - **When the user says "add a rule"**, add the rule to this CLAUDE.md file
 - **Keep docs up to date** — whenever ports, deployment config, security settings, or architecture changes, update CLAUDE.md and README.md in the same commit
 
