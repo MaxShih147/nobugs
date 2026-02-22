@@ -74,6 +74,7 @@ export function saveDatabase(db, userEmail) {
     id: db.id,
     name: db.name || 'Untitled',
     propMap: db.propMap || { ...DEFAULT_PROP_MAP },
+    valueMap: db.valueMap || {},
     addedAt: idx >= 0 ? data.databases[idx].addedAt : new Date().toISOString(),
     addedBy: idx >= 0 ? data.databases[idx].addedBy : (userEmail || 'unknown'),
   };
@@ -98,6 +99,12 @@ export function getDatabasePropMap(dbId) {
   if (db) return db.propMap;
   // Fallback to default if no mapping found
   return { ...DEFAULT_PROP_MAP };
+}
+
+export function getDatabaseValueMap(dbId) {
+  const databases = getDatabases();
+  const db = databases.find((d) => d.id === dbId);
+  return db?.valueMap || {};
 }
 
 export { DEFAULT_PROP_MAP };

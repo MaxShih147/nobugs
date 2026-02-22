@@ -8,7 +8,7 @@ import { dirname, join } from 'path';
 import { getAllBugs, getBug, updateBugInNotion, createBugInNotion, getMeta, updatePageDescription, fetchDatabaseProperties } from './notion.js';
 import { createAuthRouter, requireAuth, requireAdmin, isAuthEnabled } from './auth.js';
 import { getMemberMappings, saveMemberMappings, cacheDiscoveredNames, getDiscoveredNames } from './members.js';
-import { getDatabases, saveDatabase, deleteDatabase, getDatabasePropMap, DEFAULT_PROP_MAP } from './databases.js';
+import { getDatabases, saveDatabase, deleteDatabase, getDatabasePropMap, getDatabaseValueMap, DEFAULT_PROP_MAP } from './databases.js';
 import { getRoadmaps, createRoadmap, updateRoadmap, deleteRoadmap, createMilestone, updateMilestone, deleteMilestone } from './roadmaps.js';
 
 const app = express();
@@ -58,6 +58,7 @@ app.use('/api', (req, res, next) => {
   const dbId = req.headers['x-database-id'] || process.env.NOTION_DATABASE_ID;
   req.dbId = dbId;
   req.propMap = getDatabasePropMap(dbId);
+  req.valueMap = getDatabaseValueMap(dbId);
   next();
 });
 
@@ -72,18 +73,18 @@ app.get('/api/databases', (req, res) => {
 
 app.post('/api/databases', requireAdmin, async (req, res) => {
   try {
-    const { id, name, propMap } = req.body;
+    const { id, name, propMap, valueMap } = req.body;
     if (!id) return res.status(400).json({ error: 'Database ID is required' });
     if (!name) return res.status(400).json({ error: 'Database name is required' });
-    const entry = saveDatabase({ id, name, propMap: propMap || { ...DEFAULT_PROP_MAP } }, req.user?.email);
+    const entry = saveDatabase({ id, name, propMap: propMap || { ...DEFAULT_PROP_MAP }, valueMap: valueMap || {} }, req.user?.email);
     res.status(201).json(entry);
   } catch (err) { console.error('Failed to add database:', err.message); res.status(500).json({ error: err.message }); }
 });
 
 app.put('/api/databases/:id', requireAdmin, (req, res) => {
   try {
-    const { name, propMap } = req.body;
-    const entry = saveDatabase({ id: req.params.id, name, propMap }, req.user?.email);
+    const { name, propMap, valueMap } = req.body;
+    const entry = saveDatabase({ id: req.params.id, name, propMap, valueMap: valueMap || {} }, req.user?.email);
     res.json(entry);
   } catch (err) { console.error('Failed to update database:', err.message); res.status(500).json({ error: err.message }); }
 });
@@ -106,19 +107,19 @@ app.get('/api/databases/:id/properties', requireAdmin, async (req, res) => {
 
 app.get('/api/bugs', async (req, res) => {
   try {
-    const bugs = await getAllBugs(req.dbId, req.propMap);
+    const bugs = await getAllBugs(req.dbId, req.propMap, req.valueMap);
     cacheDiscoveredNames(bugs);
     res.json({ bugs });
   } catch (err) { console.error('Failed to fetch bugs:', err.message); res.status(500).json({ error: err.message }); }
 });
 
 app.get('/api/bugs/:id', async (req, res) => {
-  try { res.json(await getBug(req.params.id, req.propMap)); }
+  try { res.json(await getBug(req.params.id, req.propMap, req.valueMap)); }
   catch (err) { console.error('Failed to fetch bug:', err.message); res.status(500).json({ error: err.message }); }
 });
 
 app.patch('/api/bugs/:id', async (req, res) => {
-  try { res.json(await updateBugInNotion(req.params.id, req.body, req.propMap)); }
+  try { res.json(await updateBugInNotion(req.params.id, req.body, req.propMap, req.valueMap)); }
   catch (err) { console.error('Failed to update bug:', err.message); res.status(500).json({ error: err.message }); }
 });
 
@@ -130,13 +131,13 @@ app.put('/api/bugs/:id/description', async (req, res) => {
 });
 
 app.post('/api/bugs', async (req, res) => {
-  try { res.status(201).json(await createBugInNotion(req.dbId, req.propMap, req.body)); }
+  try { res.status(201).json(await createBugInNotion(req.dbId, req.propMap, req.body, req.valueMap)); }
   catch (err) { console.error('Failed to create bug:', err.message); res.status(500).json({ error: err.message }); }
 });
 
 app.get('/api/meta', async (req, res) => {
   try {
-    const meta = await getMeta(req.dbId, req.propMap);
+    const meta = await getMeta(req.dbId, req.propMap, req.valueMap);
     // Include members from mappings + discovered names
     const { mappings } = getMemberMappings();
     const discovered = getDiscoveredNames();

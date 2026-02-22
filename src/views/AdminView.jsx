@@ -175,10 +175,13 @@ function DatabaseSection({ user, onDatabasesChanged }) {
   );
 }
 
+const VALUE_MAP_FIELDS = ['priority', 'status', 'type', 'scope', 'size', 'sprint'];
+
 function DatabaseForm({ db, onSave, onCancel, user }) {
   const [name, setName] = useState(db?.name || '');
   const [dbId, setDbId] = useState(db?.id || '');
   const [propMap, setPropMap] = useState(db?.propMap || {});
+  const [valueMap, setValueMap] = useState(db?.valueMap || {});
   const [notionProps, setNotionProps] = useState(null);
   const [fetchingProps, setFetchingProps] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -210,11 +213,20 @@ function DatabaseForm({ db, onSave, onCancel, user }) {
     setSaving(true);
     setError(null);
     try {
+      // Strip empty entries from valueMap before saving
+      const cleanValueMap = {};
+      for (const [field, mappings] of Object.entries(valueMap)) {
+        const cleaned = {};
+        for (const [notionVal, appVal] of Object.entries(mappings)) {
+          if (appVal && appVal.trim()) cleaned[notionVal] = appVal.trim();
+        }
+        if (Object.keys(cleaned).length > 0) cleanValueMap[field] = cleaned;
+      }
       let entry;
       if (isEdit) {
-        entry = await updateDatabase(dbId, { name, propMap });
+        entry = await updateDatabase(dbId, { name, propMap, valueMap: cleanValueMap });
       } else {
-        entry = await addDatabase({ id: dbId.trim(), name, propMap });
+        entry = await addDatabase({ id: dbId.trim(), name, propMap, valueMap: cleanValueMap });
       }
       onSave(entry);
     } catch (err) {
@@ -228,7 +240,22 @@ function DatabaseForm({ db, onSave, onCancel, user }) {
     setPropMap((prev) => ({ ...prev, [fieldKey]: notionPropName }));
   };
 
+  const handleValueMapChange = (fieldKey, notionValue, appValue) => {
+    setValueMap((prev) => ({
+      ...prev,
+      [fieldKey]: { ...(prev[fieldKey] || {}), [notionValue]: appValue },
+    }));
+  };
+
   const propNames = notionProps ? Object.keys(notionProps).sort() : [];
+
+  // Compute which fields have options available for value mapping
+  const valueMappableFields = VALUE_MAP_FIELDS.filter((fieldKey) => {
+    const notionPropName = propMap[fieldKey];
+    if (!notionPropName || !notionProps) return false;
+    const propInfo = notionProps[notionPropName];
+    return propInfo?.options && propInfo.options.length > 0;
+  });
 
   return (
     <div>
@@ -310,6 +337,61 @@ function DatabaseForm({ db, onSave, onCancel, user }) {
                   <span style={{ textAlign: 'center', fontSize: '11px', color: T.textDim, fontFamily: T.fontSans }}>
                     {propInfo ? propInfo.type : '--'}
                   </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {notionProps && valueMappableFields.length > 0 && (
+        <div style={{ marginBottom: 16 }}>
+          <label style={{ ...labelStyle, display: 'block', marginBottom: 10 }}>Value Mapping</label>
+          <p style={{ fontSize: '11px', color: T.textDim, fontFamily: T.fontSans, margin: '0 0 12px' }}>
+            Translate Notion option values to cleaner display names. Leave blank for passthrough.
+          </p>
+          <div style={{ ...glass, borderRadius: T.radius, overflow: 'hidden' }}>
+            {valueMappableFields.map((fieldKey, fi) => {
+              const notionPropName = propMap[fieldKey];
+              const options = notionProps[notionPropName].options;
+              const fieldLabel = APP_FIELDS.find((f) => f.key === fieldKey)?.label || fieldKey;
+              return (
+                <div key={fieldKey}>
+                  <div style={{
+                    padding: '10px 16px',
+                    background: 'rgba(255, 255, 255, 0.02)',
+                    borderBottom: `1px solid ${T.border}`,
+                    borderTop: fi > 0 ? `1px solid ${T.border}` : 'none',
+                  }}>
+                    <span style={{ fontSize: '12px', fontWeight: 600, color: T.accent, fontFamily: T.fontSans }}>
+                      {fieldLabel}
+                    </span>
+                    <span style={{ fontSize: '11px', color: T.textDim, fontFamily: T.fontSans, marginLeft: 8 }}>
+                      ({options.length} options)
+                    </span>
+                  </div>
+                  {options.map((notionVal) => {
+                    const appVal = valueMap[fieldKey]?.[notionVal] || '';
+                    return (
+                      <div key={notionVal} style={{
+                        display: 'grid', gridTemplateColumns: '1fr 32px 1fr', alignItems: 'center',
+                        padding: '8px 16px', borderBottom: `1px solid ${T.border}`,
+                      }}>
+                        <span style={{ fontSize: '13px', color: T.text, fontFamily: T.fontSans, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {notionVal}
+                        </span>
+                        <span style={{ textAlign: 'center', fontSize: '12px', color: T.textDim, fontFamily: T.fontSans }}>
+                          {'\u2192'}
+                        </span>
+                        <input
+                          value={appVal}
+                          onChange={(e) => handleValueMapChange(fieldKey, notionVal, e.target.value)}
+                          placeholder={notionVal}
+                          style={{ ...fieldStyle, padding: '6px 10px', fontSize: '12px' }}
+                        />
+                      </div>
+                    );
+                  })}
                 </div>
               );
             })}
