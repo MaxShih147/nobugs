@@ -15,6 +15,7 @@ A flexible bug tracker dashboard that uses **Notion as its database**. Your team
 | Members | Click a member to filter their bugs, see who's overloaded |
 | Projects | Per-project cards with resolution %, filter by project |
 | Roadmap | Sprint timeline with progress bars and bug cards |
+| Admin | Manage databases, property/value mappings, and member email mappings |
 
 All views support global filters (project, priority, status, search).
 
@@ -47,17 +48,23 @@ All views support global filters (project, priority, status, search).
 └─────────────────┼────────────────────────────────┘
                   │
     ┌─────────────▼──────────────┐
-    │     Express API Server      │  port 4993
-    │  ┌──────────┐ ┌──────────┐ │
-    │  │ auth.js   │ │ notion.js│ │
-    │  │ (JWT,     │ │ (CRUD,   │ │
-    │  │  invite   │ │  prop    │ │
-    │  │  code)    │ │  mapper) │ │
-    │  └──────────┘ └────┬─────┘ │
-    └─────────────────────┼──────┘
+    │        Express API Server          │  port 4993
+    │  ┌──────────┐ ┌──────────────────┐│
+    │  │ auth.js   │ │ notion.js        ││
+    │  │ (JWT,     │ │ (CRUD, prop map, ││
+    │  │  invite   │ │  value translate)││
+    │  │  code)    │ └────────┬─────────┘│
+    │  └──────────┘          │           │
+    │  ┌──────────────┐ ┌────▼────────┐  │
+    │  │ databases.js  │ │ members.js  │  │
+    │  │ (multi-db,    │ │ (name→email │  │
+    │  │  propMap,     │ │  mappings)  │  │
+    │  │  valueMap)    │ └─────────────┘  │
+    │  └──────────────┘                   │
+    └─────────────────────┼───────────────┘
                           │ Notion SDK
     ┌─────────────────────▼──────┐
-    │     Notion Database         │
+    │     Notion Database(s)      │
     │  (bugs, members, sprints)   │
     └────────────────────────────┘
 ```
@@ -115,21 +122,17 @@ DATA_SOURCE=notion
 
 ### 4. Map Your Properties
 
-Edit `server/notion.js` and update `PROP_MAP` to match your Notion database property names:
+Property mapping is configured through the **Admin UI** — no code changes needed:
 
-```js
-const PROP_MAP = {
-  title: 'Title',           // Your title property name
-  status: 'Status',         // Your status property name
-  priority: 'Priority',     // Select: Critical, High, Medium, Low
-  assignee: 'Assignee',     // Select or Person type
-  project: 'Project',       // Select type
-  tags: 'Tags',             // Multi-select type
-  sprint: 'Sprint',         // Select type
-  due: 'Due Date',          // Date type
-  description: 'Description', // Rich text type
-};
-```
+1. Start the server and open the app
+2. Go to the **Admin** panel
+3. Click **"Add Database"** or **"Edit Mapping"** on an existing database
+4. Enter your Notion database ID and click **"Fetch Properties"**
+5. Map each app field (Title, Status, Priority, etc.) to the matching Notion property name
+6. Optionally configure **Value Mapping** to translate Notion option values to cleaner display names (e.g. emoji-heavy priorities like "🔥🔥🔥🔥P1" → "P1")
+7. Save — mappings are stored in `data/databases.json`
+
+Multiple databases are supported — each gets its own property mapping and value mapping.
 
 ### 5. Run with Notion
 
@@ -263,7 +266,8 @@ nobugs/
 │   │   ├── KanbanView.jsx
 │   │   ├── MemberView.jsx
 │   │   ├── ProjectView.jsx
-│   │   └── RoadmapView.jsx
+│   │   ├── RoadmapView.jsx
+│   │   └── AdminView.jsx  # Database, value mapping, member management
 │   ├── hooks/
 │   │   └── useBugs.js   # Data fetching + filter state
 │   ├── lib/
@@ -277,7 +281,12 @@ nobugs/
 ├── server/
 │   ├── index.js         # Express API server
 │   ├── auth.js          # Invite code auth, JWT, requireAuth middleware
-│   └── notion.js        # Notion SDK client + data mapper
+│   ├── notion.js        # Notion SDK client, value translation, CRUD
+│   ├── databases.js     # Multi-database config, propMap, valueMap
+│   ├── members.js       # Member name → email mappings
+│   └── roadmaps.js      # Roadmap CRUD
+├── data/
+│   └── databases.json   # Persisted database configs + mappings
 ├── docker/
 │   └── serve-static.js  # Production combined server
 ├── Dockerfile
